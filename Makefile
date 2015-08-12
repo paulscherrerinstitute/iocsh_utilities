@@ -1,16 +1,6 @@
 include /ioc/tools/driver.makefile
 
-# I need to find the Linux link.h before the EPICS link.h
-USR_INCLUDES_Linux=-idirafter ${EPICS_BASE}/include 
-USR_INCLUDES+=$(USR_INCLUDES_$(OS_CLASS))
-
-USR_CFLAGS=-DEPICS_RELEASE=$(EPICS_VERSION) -DT_A=$(T_A)
-
-HEADERS += require.h
 BUILDCLASSES += Linux
-
-SOURCES += require.c
-DBDS    += require.dbd
 
 SOURCES += listRecords.c
 DBDS    += listRecords.dbd
