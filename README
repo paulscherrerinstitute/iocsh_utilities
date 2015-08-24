@@ -3,10 +3,6 @@ real device drivers. It's a bunch of utilities.
 
 Functions are:
 
-require "<lib>" [,"<version>"]
- shell function
- load a library and its dbd file
-
 updateMenuConvert
  startup script function
  add all loaded breakpoint tables found on this ioc to menu convert
