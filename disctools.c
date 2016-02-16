@@ -141,6 +141,11 @@ static void lsFunc(const iocshArgBuf *args)
         if (len > maxlen) maxlen = len;
     }
     cols=80/(maxlen+=2);
+    if (cols == 0)
+    {
+        cols = 1;
+        maxlen = 0;
+    }
     rows=(n-1)/cols+1;
     for (r = 0; r < rows; r++)
     {
