@@ -8,6 +8,8 @@
 * DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 */
 
+#define _FILE_OFFSET_BITS 64
+
 #include <iocsh.h>
 #include <stdio.h>
 #ifdef UNIX
@@ -77,7 +79,7 @@ static void llFunc(const iocshArgBuf *args)
         else type='?';
         localtime_r(&filestat.st_mtime, &time);
         strftime(timestr, 20, "%b %e %Y %H:%M", &time);
-        printf("%c%c%c%c%c%c%c%c%c%c %4lu",
+        printf("%c%c%c%c%c%c%c%c%c%c %4llu",
             type,
             filestat.st_mode & S_IRUSR ? 'r' : '-',
             filestat.st_mode & S_IWUSR ? 'w' : '-',
@@ -91,15 +93,15 @@ static void llFunc(const iocshArgBuf *args)
             filestat.st_mode & S_IWOTH ? 'w' : '-',
             filestat.st_mode & S_ISVTX ? 't' :
             filestat.st_mode & S_IXOTH ? 'x' : '-',
-            (unsigned long) filestat.st_nlink);
+            (unsigned long long) filestat.st_nlink);
         user=getpwuid(filestat.st_uid);
         if (user) printf(" %-8s", user->pw_name);
         else printf(" %-8d", filestat.st_uid);
         group=getgrgid(filestat.st_gid);
         if (group) printf(" %-8s", group->gr_name);
         else printf(" %-8d", filestat.st_gid);
-        printf (" %8ld %s %s",
-            filestat.st_size, timestr,
+        printf (" %8lld %s %s",
+            (unsigned long long) filestat.st_size, timestr,
             namelist[i]->d_name);
         if (S_ISLNK(filestat.st_mode))
         {
