@@ -10,6 +10,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#ifdef vxWorks
+#include <sysLib.h>
+#endif
 #include <dbScan.h>
 #include <dbStaticLib.h>
 #include <dbAccess.h>
@@ -18,7 +21,6 @@
 #define EPICS_3_13
 extern DBBASE *pdbbase;
 #else
-#define EPICS_3_14
 #include <iocsh.h>
 #include <epicsExport.h>
 #endif
@@ -79,10 +81,22 @@ int addScan (char* ratestr)
     menuScan->papChoiceName=papChoiceName;
     menuScan->papChoiceValue=papChoiceValue;
     menuScan->nChoice = nChoice+1;
+#ifdef vxWorks
+    i = (int)4/rate;
+    if (sysClkRateGet() < i)
+    {
+        fprintf(stderr, "addScan: increasing sysClkRate from %d to %d Hz\n",
+            sysClkRateGet(), i);
+        if (sysClkRateSet(i) != 0)
+        {
+            fprintf(stderr, "addScan: increasing sysClkRate failed! Scan rate may not work as expected\n");
+        }
+    }
+#endif
     return 0;    
 }
 
-#ifdef EPICS_3_14
+#ifndef EPICS_3_13
 static const iocshArg addScanArg0 = { "rate", iocshArgString };
 static const iocshArg * const addScanArgs[1] = { &addScanArg0 };
 static const iocshFuncDef addScanDef = { "addScan", 1, addScanArgs };
