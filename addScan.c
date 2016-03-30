@@ -82,14 +82,22 @@ int addScan (char* ratestr)
     menuScan->papChoiceValue=papChoiceValue;
     menuScan->nChoice = nChoice+1;
 #ifdef vxWorks
+#ifndef SYS_CLK_RATE_MAX
+#define SYS_CLK_RATE_MAX 5000
+#endif
     i = (int)4/rate;
     if (sysClkRateGet() < i)
     {
+        if (i > SYS_CLK_RATE_MAX)
+        {
+            i = SYS_CLK_RATE_MAX;
+            fprintf(stderr, "addScan: sysClkRate is limited to %s Hz! Scan rate may not work as expected.\n", i);
+        }
         fprintf(stderr, "addScan: increasing sysClkRate from %d to %d Hz\n",
             sysClkRateGet(), i);
         if (sysClkRateSet(i) != 0)
         {
-            fprintf(stderr, "addScan: increasing sysClkRate failed! Scan rate may not work as expected\n");
+            fprintf(stderr, "addScan: increasing sysClkRate failed! Scan rate may not work as expected.\n");
         }
     }
 #endif
