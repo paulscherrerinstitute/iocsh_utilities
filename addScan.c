@@ -91,7 +91,7 @@ int addScan (char* ratestr)
         if (i > SYS_CLK_RATE_MAX)
         {
             i = SYS_CLK_RATE_MAX;
-            fprintf(stderr, "addScan: sysClkRate is limited to %s Hz! Scan rate may not work as expected.\n", i);
+            fprintf(stderr, "addScan: sysClkRate is limited to %i Hz! Scan rate may not work as expected.\n", i);
         }
         fprintf(stderr, "addScan: increasing sysClkRate from %d to %d Hz\n",
             sysClkRateGet(), i);
