@@ -1,1 +1,2 @@
 registrar(execRegister)
+variable(execDebug, int)

@@ -24,6 +24,9 @@
 #endif
 #include <epicsExport.h>
 
+int execDebug;
+epicsExportAddress(int,execDebug);
+
 #ifdef UNIX
 static const iocshArg execArg0 = { "command", iocshArgString };
 static const iocshArg execArg1 = { "arguments", iocshArgArgv };
@@ -71,6 +74,7 @@ static void execFunc (const iocshArgBuf *args)
             /* add unquoted special chars | ; & */
             if (special) p += sprintf(p, "%c", special);
         }
+        if (execDebug) fprintf(stderr, "system(%s)\n", commandline);
         status = system(commandline);
     }
     if (WIFSIGNALED(status))
