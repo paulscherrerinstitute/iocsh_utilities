@@ -69,11 +69,13 @@ static void execFunc (const iocshArgBuf *args)
             }
 
             /* quote words to protect special chars (e.g. spaces) */
-            if (!(special && len==0))
+            if ((!special && len==0) || strpbrk(arg, " \t\r\n"))
                 p += sprintf(p, " \"%.*s\"", (int)len, arg);
+            else
+                p += sprintf(p, " %.*s", (int)len, arg);
 
             /* add unquoted special chars | ; & */
-            if (special) p += sprintf(p, " %c", special);
+            if (special) p += sprintf(p, "%c", special);
         }
         if (execDebug) fprintf(stderr, "system(%s)\n", commandline);
         status = system(commandline);
