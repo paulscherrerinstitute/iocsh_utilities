@@ -17,6 +17,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
 #include <time.h>
 #include <malloc.h>
 #include <pwd.h>
@@ -29,8 +31,9 @@
 #ifdef UNIX
 
 /* dir, ll, ls */
-static const iocshArg dirArg0 = { "directrory", iocshArgString };
-static const iocshArg * const dirArgs[1] = { &dirArg0 };
+static const iocshArg * const dirArgs[1] = { 
+    &(iocshArg){ "files/direcories", iocshArgArgv }
+};
 static const iocshFuncDef dirDef = { "dir", 1, dirArgs };
 static const iocshFuncDef llDef = { "ll", 1, dirArgs };
 static const iocshFuncDef lsDef = { "ls", 1, dirArgs };
@@ -40,35 +43,21 @@ static int nohidden(const struct dirent *entry)
     return entry->d_name[0] != '.';
 }
 
-static void llFunc(const iocshArgBuf *args)
+
+void llOut(const char* dirname, const char* filename)
 {
-    char* dirname = ".";
-    struct dirent** namelist;
     struct stat filestat;
-    char type;
-    char filename[256];
-    char target[256];
+    struct tm time;
     struct group* group;
     struct passwd* user;
-    struct tm time;
+    char target[256];
     char timestr[20];
-    int n, i, len;
+    char fullname[256];
+    char type;
 
-    if (args[0].sval) dirname = args[0].sval;
-    n = scandir(dirname, &namelist, nohidden, alphasort);
-    if (n < 0)
+    sprintf(fullname, "%s%s", dirname ? dirname : "", filename);
+    if (lstat(fullname, &filestat) == 0)
     {
-        perror(dirname);
-        return;
-    }
-    for (i = 0; i < n; i++)
-    {
-        sprintf(filename, "%s/%s", dirname, namelist[i]->d_name);
-        if (lstat(filename, &filestat))
-        {
-            perror(namelist[i]->d_name);
-            continue;
-        }
         if (S_ISREG(filestat.st_mode)) type='-';
         else if (S_ISDIR(filestat.st_mode)) type='d';
         else if (S_ISCHR(filestat.st_mode)) type='c';
@@ -77,8 +66,6 @@ static void llFunc(const iocshArgBuf *args)
         else if (S_ISLNK(filestat.st_mode)) type='l';
         else if (S_ISSOCK(filestat.st_mode)) type='s';
         else type='?';
-        localtime_r(&filestat.st_mtime, &time);
-        strftime(timestr, 20, "%b %e %Y %H:%M", &time);
         printf("%c%c%c%c%c%c%c%c%c%c %4llu",
             type,
             filestat.st_mode & S_IRUSR ? 'r' : '-',
@@ -100,12 +87,17 @@ static void llFunc(const iocshArgBuf *args)
         group=getgrgid(filestat.st_gid);
         if (group) printf(" %-8s", group->gr_name);
         else printf(" %-8d", filestat.st_gid);
-        printf (" %8lld %s %s",
-            (unsigned long long) filestat.st_size, timestr,
-            namelist[i]->d_name);
+        localtime_r(&filestat.st_mtime, &time);
+        strftime(timestr, 20, "%b %e %Y %H:%M", &time);
+        if (S_ISCHR(filestat.st_mode) || S_ISBLK(filestat.st_mode))
+            printf (" %3d, %3d", major(filestat.st_rdev), minor(filestat.st_rdev));
+        else
+            printf (" %8lld", (unsigned long long) filestat.st_size);
+        printf (" %s %s", timestr, filename);
         if (S_ISLNK(filestat.st_mode))
         {
-            len = readlink(filename, target, 255);
+            size_t len;
+            len = readlink(fullname, target, 255);
             if (len == -1) perror(filename);
             else
             {
@@ -117,50 +109,169 @@ static void llFunc(const iocshArgBuf *args)
         {
             printf("\n");
         }
-        free(namelist[i]);
     }
-    free(namelist);
+    else
+    {
+        if (errno == EACCES)
+        {
+            printf("??????????    ? ?        ?               ?           ? %s\n", filename);
+        }
+        else
+        {
+            perror(filename);
+        }
+    }
 }
 
-static void lsFunc(const iocshArgBuf *args)
+static void dirFunc(const iocshArgBuf *args)
 {
-    char* dirname = ".";
-    struct dirent** namelist;
-    int n, i, cols, rows, r, c, len, maxlen=0;
-
-    if (args[0].sval) dirname = args[0].sval;
-    n = scandir(dirname, &namelist, nohidden, alphasort);
-    if (n < 0)
+    glob_t globinfo;
+    const char* filename;
+    int i, n=0, len, maxlen=0;
+    int longformat = 1;
+    int rows, cols, r, c;
+    int width = 80;
+    
+    if (strcmp(args[0].aval.av[0], "ls") == 0)
     {
-        perror(dirname);
-        return;
+        struct winsize w;
+        ioctl(0, TIOCGWINSZ, &w);
+        if (w.ws_col) width = w.ws_col;
+        longformat = 0;
     }
-    for (i = 0; i < n; i++)
+
+    if (args[0].aval.ac == 1)
     {
-        len = strlen(namelist[i]->d_name);
+        if (glob("./", 0, NULL, &globinfo) != 0)
+        {
+            perror(".");
+            return;
+        }
+    }
+    else for (i = 1; i < args[0].aval.ac; i++)
+    {
+        const char* arg;
+        int status;
+        arg = args[0].aval.av[i];
+        errno = 0;
+        status = glob(arg, (i>1 ? GLOB_APPEND : 0)
+#ifdef GLOB_BRACE    
+        | GLOB_BRACE
+#endif
+#ifdef GLOB_TILDE_CHECK
+        | GLOB_TILDE_CHECK
+#endif
+        | (longformat ? GLOB_NOCHECK : 0)
+        | GLOB_MARK, NULL, &globinfo);
+        if (status != 0)
+        {
+            if (status == GLOB_NOMATCH)
+                errno = ENOENT;
+            if (errno) perror(arg);
+        }
+    }
+    for (i = 0; i < globinfo.gl_pathc; i++)
+    {
+        filename = globinfo.gl_pathv[i];
+        len =  strlen(filename);
+        if (filename[len - 1] == '/')
+            continue;
+        if (longformat)
+        {
+            llOut(NULL, filename);
+            continue;
+        }
+        n++;
         if (len > maxlen) maxlen = len;
     }
-    cols=80/(maxlen+=2);
-    if (cols == 0)
+    if (!longformat && maxlen)
     {
-        cols = 1;
-        maxlen = 0;
-    }
-    rows=(n-1)/cols+1;
-    for (r = 0; r < rows; r++)
-    {
-        for (c = 0; c < cols; c++)
+        cols = width/(maxlen+=2);
+        if (cols == 0)
         {
-            i = r + c*rows;
-            if (i >= n) continue;
-            printf("%-*s",
-                maxlen, namelist[i]->d_name);
-            free(namelist[i]);
+            cols = 1;
+            maxlen = 0;
         }
-        printf("\n");
+        rows = (n-1)/cols+1;
+        for (r = 0; r < rows; r++)
+        {
+            for (c = 0; c < cols; c++)
+            {
+                i = r + c*rows;
+                if (i >= n) continue;
+                printf("%-*s",
+                    maxlen, globinfo.gl_pathv[i]);
+            }
+            printf("\n");
+        }
     }
-    free(namelist);
+    for (i = 0; i < globinfo.gl_pathc; i++)
+    {
+        struct dirent** namelist;
+        int j;
+        maxlen = 0;
+        
+        filename = globinfo.gl_pathv[i];
+        if (filename[0] == '/')
+            while (filename[1] == '/')
+                filename++;
+        len =  strlen(filename) - 1;
+        if (filename[len] != '/')
+            continue;
+        if (len == 0) len++;
+        
+        n = scandir(filename, &namelist, nohidden,
+    #ifdef _GNU_SOURCE
+            versionsort
+    #else
+            alphasort
+    #endif
+        );
+        if (n < 0)
+        {
+            perror(filename);
+            continue;
+        }
+        if (globinfo.gl_pathc > 1)
+            printf("%.*s:\n", len, filename);
+        for (j = 0; j < n; j++)
+        {
+            if (longformat)
+            {
+                llOut(filename, namelist[j]->d_name);
+                free(namelist[j]);
+                continue;
+            }
+            len = strlen(namelist[j]->d_name);
+            if (len > maxlen) maxlen = len;
+        }
+        if (!longformat && maxlen)
+        {
+            cols = width/(maxlen+=2);
+            if (cols == 0)
+            {
+                cols = 1;
+                maxlen = 0;
+            }
+            rows = (n-1)/cols+1;
+            for (r = 0; r < rows; r++)
+            {
+                for (c = 0; c < cols; c++)
+                {
+                    j = r + c*rows;
+                    if (j >= n) continue;
+                    printf("%-*s",
+                        maxlen, namelist[j]->d_name);
+                    free(namelist[j]);
+                }
+                printf("\n");
+            }
+        }
+        free(namelist);
+    }
+    globfree(&globinfo);
 }
+
 /* mkdir */
 static const iocshArg mkdirArg0 = { "directrory", iocshArgString };
 static const iocshArg * const mkdirArgs[1] = { &mkdirArg0 };
@@ -421,9 +532,9 @@ disctoolsRegister(void)
     static int firstTime = 1;
     if (firstTime) {
 #ifdef UNIX
-        iocshRegister(&dirDef, llFunc);
-        iocshRegister(&llDef, llFunc);
-        iocshRegister(&lsDef, lsFunc);
+        iocshRegister(&dirDef, dirFunc);
+        iocshRegister(&llDef, dirFunc);
+        iocshRegister(&lsDef, dirFunc);
         iocshRegister(&mkdirDef, mkdirFunc);
         iocshRegister(&rmdirDef, rmdirFunc);
         iocshRegister(&rmDef, rmFunc);
