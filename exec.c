@@ -69,7 +69,7 @@ static void execFunc (const iocshArgBuf *args)
             }
 
             /* quote words to protect special chars (e.g. spaces) */
-            if ((!special && len==0) || strpbrk(arg, " \t\r\n"))
+            if ((!special && len==0) || strpbrk(arg, " \t\r\n();|&<>"))
                 p += sprintf(p, " \"%.*s\"", (int)len, arg);
             else
                 p += sprintf(p, " %.*s", (int)len, arg);
