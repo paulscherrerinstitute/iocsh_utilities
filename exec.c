@@ -68,11 +68,10 @@ static void execFunc (const iocshArgBuf *args)
                 return;
             }
 
-            /* quote words to protect special chars (e.g. spaces) */
-            if ((!special && len==0) || strpbrk(arg, " \t\r\n();|&<>"))
-                p += sprintf(p, " \"%.*s\"", (int)len, arg);
-            else
-                p += sprintf(p, " %.*s", (int)len, arg);
+            /* quote words to protect any special chars */
+            /* There will be a probem with quotes in arguments */
+            /* use '\"' to pass quotes */
+            p += sprintf(p, " \"%.*s\"", (int)len, arg);
 
             /* add unquoted special chars | ; & */
             if (special) p += sprintf(p, "%c", special);
