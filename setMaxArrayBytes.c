@@ -36,7 +36,8 @@ static void setMaxArrayBytes(initHookState initState)
         /* foreach field */
         for (status = dbFirstField(&dbEntry, 0); status == 0; status = dbNextField(&dbEntry, 0))
         {
-            /* all array fields are SPC_DBADDR */
+            /* all array fields are DBF_NOACCESS and SPC_DBADDR */
+            if (dbEntry.pflddes->field_type != DBF_NOACCESS) continue;
             if (dbEntry.pflddes->special != SPC_DBADDR) continue;
         
             if (setMaxArrayBytesDebug)
@@ -47,6 +48,7 @@ static void setMaxArrayBytes(initHookState initState)
             {
                 addr.pfldDes = dbEntry.pflddes;
                 addr.precord = precnode->precord;
+                addr.no_elements = 1;
 
                 /* get array type and size */
                 prset = dbGetRset(&addr);
