@@ -1,0 +1,2 @@
+registrar(setMaxArrayBytesRegister)
+variable(setMaxArrayBytesDebug,int)

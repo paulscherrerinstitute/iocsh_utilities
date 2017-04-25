@@ -20,4 +20,7 @@ DBDS_3.14    += exec.dbd
 SOURCES_3.14 += mlock.c
 DBDS_3.14    += mlock.dbd
 
+SOURCES_3.14 += setMaxArrayBytes.c
+DBDS_3.14    += setMaxArrayBytes.dbd
+
 SOURCES_vxWorks += bootNotify.c
