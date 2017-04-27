@@ -2,17 +2,24 @@ include /ioc/tools/driver.makefile
 
 BUILDCLASSES += Linux
 
-SOURCES += listRecords.c
-DBDS    += listRecords.dbd
+DBDS = -none-
 
-SOURCES += updateMenuConvert.c
-DBDS    += updateMenuConvert.dbd
+SOURCES      += listRecords.c
+DBDS_3.14    += listRecords.dbd
 
-SOURCES += addScan.c
-DBDS    += addScan.dbd
+SOURCES      += updateMenuConvert.c
+DBDS_3.14    += updateMenuConvert.dbd
 
-SOURCES += dbll.c
-DBDS    += dbll.dbd
+SOURCES      += addScan.c
+DBDS_3.14    += addScan.dbd
+
+SOURCES      += dbll.c
+DBDS_3.14    += dbll.dbd
+
+SOURCES      += cal.c
+DBDS_3.14    += cal.dbd
+
+SOURCES_3.13 += glob.c
 
 SOURCES_3.14 += disctools.c
 DBDS_3.14    += disctools.dbd
