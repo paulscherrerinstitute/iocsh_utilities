@@ -5,39 +5,7 @@
 #include "epicsVersion.h"
 #ifdef BASE_VERSION
 #define EPICS_3_13
-
-static int epicsStrGlobMatch(
-    const char *str, const char *pattern)
-{
-    const char *cp=NULL, *mp=NULL;
-    
-    while ((*str) && (*pattern != '*')) {
-        if ((*pattern != *str) && (*pattern != '?'))
-            return 0;
-        pattern++;
-        str++;
-    }
-    while (*str) {
-        if (*pattern == '*') {
-            if (!*++pattern)
-                return 1;
-            mp = pattern;
-            cp = str+1;
-        }
-        else if ((*pattern == *str) || (*pattern == '?')) {
-            pattern++;
-            str++;
-        }
-        else {
-            pattern = mp;
-            str = cp++;
-        }
-    }
-    while (*pattern == '*')
-        pattern++;
-    return !*pattern;
-}
-
+int epicsStrGlobMatch(const char *str, const char *pattern);
 #else
 #include "iocsh.h"
 #include "epicsStdioRedirect.h"
@@ -51,12 +19,25 @@ long dbll(const char* match)
 {
     DBENTRY dbEntry;
     long status = 0;
-    char *matchanyfield = NULL;
+    size_t l = 0;
+    char *d = NULL;
+    char *alt_match = NULL;
 
-    if (match && strchr(match, '.') == 0)
+    if (match)
     {
-        matchanyfield = malloc(strlen(match)+3);
-        sprintf(matchanyfield, "%s.*", match);
+        l = strlen(match);
+        d = strchr(match, '.');
+        
+        if (!d)
+        {
+            alt_match = malloc(l+3);
+            sprintf(alt_match, "%s.*", match);
+        }
+        else if (strcmp(d, ".VAL") == 0 || strcmp(d, ".*") == 0)
+        {
+            alt_match = malloc(d-match+1);
+            sprintf(alt_match, "%.*s", d-match, match);
+        }
     }
 
     dbInitEntry(pdbbase, &dbEntry);
@@ -67,8 +48,10 @@ long dbll(const char* match)
         if (dbGetLinkType(&dbEntry) == DCT_LINK_PV)
         {
             const char* target = ((DBLINK *)dbEntry.pfield)->value.pv_link.pvname;
-            if (!match || epicsStrGlobMatch(target, match) ||
-                (matchanyfield && epicsStrGlobMatch(target, matchanyfield)))
+            if (!match || (
+                    (strchr(target, '.') ? 1 : 0) == (d ? 1 : 0) ?
+                        epicsStrGlobMatch(target, match) : 
+                        alt_match ? epicsStrGlobMatch(target, alt_match) : 0))
             {
                 printf("%s.%s --> %s\n", dbGetRecordName(&dbEntry), dbGetFieldName(&dbEntry),
                     dbGetString(&dbEntry));
@@ -76,8 +59,8 @@ long dbll(const char* match)
         }
     }
     dbFinishEntry(&dbEntry);   
-    free(matchanyfield);
-    return status;
+    free(alt_match);
+    return 0;
 }
 
 #ifndef EPICS_3_13
