@@ -36,4 +36,7 @@ DBDS_3.14    += setMaxArrayBytes.dbd
 SOURCES_3.14 += dbli.c
 DBDS_3.14    += dbli.dbd
 
+SOURCES_3.14.12 += dbla.c
+DBDS_3.14.12    += dbla.dbd
+
 SOURCES_vxWorks += bootNotify.c
