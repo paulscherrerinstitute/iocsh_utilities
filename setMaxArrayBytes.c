@@ -24,6 +24,9 @@ static void setMaxArrayBytes(initHookState initState)
     long status, size, maxNeeded = 0, maxBytes = 0;
 
     if (initState != initHookAfterFinishDevSup) return;
+    
+    if (setMaxArrayBytesDebug)
+        printf("reading array sizes\n");
 
     dbInitEntry(pdbbase,&dbEntry);
 
@@ -47,6 +50,7 @@ static void setMaxArrayBytes(initHookState initState)
             for (precnode = (dbRecordNode *)ellFirst(&dbEntry.precordType->recList); precnode; precnode = (dbRecordNode *)ellNext(&precnode->node))
             {
                 addr.pfldDes = dbEntry.pflddes;
+                addr.pfield = dbEntry.pfield;
                 addr.precord = precnode->precord;
                 addr.no_elements = 1;
 
