@@ -36,7 +36,7 @@ long dbll(const char* match)
         else if (strcmp(d, ".VAL") == 0 || strcmp(d, ".*") == 0)
         {
             alt_match = malloc(d-match+1);
-            sprintf(alt_match, "%.*s", d-match, match);
+            sprintf(alt_match, "%.*s", (int)(d-match), match);
         }
     }
 
