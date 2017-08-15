@@ -96,7 +96,7 @@ void llOut(const char* dirname, const char* filename)
         printf (" %s %s", timestr, filename);
         if (S_ISLNK(filestat.st_mode))
         {
-            size_t len;
+            ssize_t len;
             len = readlink(fullname, target, 255);
             if (len == -1) perror(filename);
             else
@@ -127,7 +127,8 @@ static void dirFunc(const iocshArgBuf *args)
 {
     glob_t globinfo;
     const char* filename;
-    int i, n=0, len, maxlen=0;
+    size_t i, n=0;
+    int len, maxlen=0;
     int longformat = 1;
     int rows, cols, r, c;
     int width = 80;
@@ -148,7 +149,7 @@ static void dirFunc(const iocshArgBuf *args)
             return;
         }
     }
-    else for (i = 1; i < args[0].aval.ac; i++)
+    else for (i = 1; i < (size_t)args[0].aval.ac; i++)
     {
         const char* arg;
         int status;
@@ -208,6 +209,7 @@ static void dirFunc(const iocshArgBuf *args)
     for (i = 0; i < globinfo.gl_pathc; i++)
     {
         struct dirent** namelist;
+        int n;
         int j;
         maxlen = 0;
         
@@ -334,7 +336,7 @@ struct rmflags_t {
 static void rmPriv(char* pattern, struct rmflags_t flags)
 {
     char* filename;
-    int j;
+    size_t j;
     glob_t globresult;
 
     glob(pattern, GLOB_NOSORT|GLOB_NOMAGIC
