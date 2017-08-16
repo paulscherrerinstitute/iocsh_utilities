@@ -39,4 +39,7 @@ DBDS_3.14    += dbli.dbd
 SOURCES_3.14.12 += dbla.c
 DBDS_3.14.12    += dbla.dbd
 
+SOURCES_3.15 = $(SOURCES_3.14 SOURCES_3.14.12)
+DBDS_3.15 = $(DBDS_3.14 DBDS_3.14.12)
+
 SOURCES_vxWorks += bootNotify.c

@@ -32,6 +32,12 @@ struct dbFldDes{
 #define chanList     addrq
 #endif
 
+#if EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION > 31500
+#define getAddr(pciu) pciu->dbch->addr
+#else
+#define getAddr(pciu) pciu->addr
+#endif
+
 long cal(const char* match)
 {
     struct client *client;
@@ -49,8 +55,8 @@ long cal(const char* match)
         
         for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu; pciu = (struct channel_in_use *)ellNext(&pciu->node))
         {
-            const char* recname = pciu->addr.precord->name;
-            sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)pciu->addr.pfldDes)->name);
+            const char* recname = getAddr(pciu).precord->name;
+            sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
             if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match))
             {
                 printf("%s%s%s:%i --> %s\n",
