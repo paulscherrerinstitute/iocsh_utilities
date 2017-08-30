@@ -30,16 +30,15 @@ DBDS_3.14    += exec.dbd
 SOURCES_3.14 += mlock.c
 DBDS_3.14    += mlock.dbd
 
+ifndef BASE_3_16
 SOURCES_3.14 += setMaxArrayBytes.c
 DBDS_3.14    += setMaxArrayBytes.dbd
+endif
 
 SOURCES_3.14 += dbli.c
 DBDS_3.14    += dbli.dbd
 
 SOURCES_3.14.12 += dbla.c
 DBDS_3.14.12    += dbla.dbd
-
-SOURCES_3.15 = $(SOURCES_3.14 SOURCES_3.14.12)
-DBDS_3.15 = $(DBDS_3.14 DBDS_3.14.12)
 
 SOURCES_vxWorks += bootNotify.c
