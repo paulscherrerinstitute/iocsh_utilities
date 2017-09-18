@@ -43,18 +43,23 @@ long dbll(const char* match)
     dbInitEntry(pdbbase, &dbEntry);
     for (status = dbFirstRecordType(&dbEntry); !status; status = dbNextRecordType(&dbEntry))
     for (status = dbFirstRecord(&dbEntry); !status; status = dbNextRecord(&dbEntry))
-    for (status = dbFirstField(&dbEntry, 0); !status; status = dbNextField(&dbEntry, 0))
     {
-        if (dbGetLinkType(&dbEntry) == DCT_LINK_PV)
+#if EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION >= 31411
+        if (dbIsAlias(&dbEntry)) continue;
+#endif
+        for (status = dbFirstField(&dbEntry, 0); !status; status = dbNextField(&dbEntry, 0))
         {
-            const char* target = ((DBLINK *)dbEntry.pfield)->value.pv_link.pvname;
-            if (!match || (
-                    (strchr(target, '.') ? 1 : 0) == (d ? 1 : 0) ?
-                        epicsStrGlobMatch(target, match) : 
-                        alt_match ? epicsStrGlobMatch(target, alt_match) : 0))
+            if (dbGetLinkType(&dbEntry) == DCT_LINK_PV)
             {
-                printf("%s.%s --> %s\n", dbGetRecordName(&dbEntry), dbGetFieldName(&dbEntry),
-                    dbGetString(&dbEntry));
+                const char* target = ((DBLINK *)dbEntry.pfield)->value.pv_link.pvname;
+                if (!match || (
+                        (strchr(target, '.') ? 1 : 0) == (d ? 1 : 0) ?
+                            epicsStrGlobMatch(target, match) : 
+                            alt_match ? epicsStrGlobMatch(target, alt_match) : 0))
+                {
+                    printf("%s.%s ==> %s\n", dbGetRecordName(&dbEntry), dbGetFieldName(&dbEntry),
+                        dbGetString(&dbEntry));
+                }
             }
         }
     }
