@@ -10,92 +10,73 @@
 /* it is just crazy how much we would have to include to get this definition */
 extern DBBASE *pdbbase;
 
-long forEachInfo(const char* infopatterns, long func(DBENTRY *pdbentry, void* usr), void* usr)
+long dbNextMatchingInfo(DBENTRY *pdbentry, const char* patternlist[])
+{
+    long status = 0;
+    const char** pattern;
+
+    if (!pdbentry->precordType)
+    {
+        status = dbFirstRecordType(pdbentry);
+        if (status) return status;
+    }
+    while(1) {
+        status = dbNextInfo(pdbentry);
+        while (status) {
+            status = dbNextRecord(pdbentry);
+            while (status) {
+                status = dbNextRecordType(pdbentry);
+                if (status) return status;
+                status = dbFirstRecord(pdbentry);
+            }
+            status = dbFirstInfo(pdbentry); 
+        }
+        if (!patternlist || !*patternlist) return 0;
+        for (pattern = patternlist; *pattern; pattern++)
+            if (epicsStrGlobMatch(dbGetInfoName(pdbentry), *pattern)) return 0;
+    }
+}
+
+static void dblilist(const char** patternlist)
 {
     DBENTRY dbentry;
-    char *infocopy = NULL;
-    char **matchlist = NULL;
-    long status = 0;
-
-    if (infopatterns) {
-        char *p;
-        int n, i;
-
-        infocopy = epicsStrDup(infopatterns);
-        n = 1;
-        p = infocopy;
-        while (*p && (p = strchr(p,' '))) {
-            n++;
-            while (*p == ' ') p++;
-        }
-        matchlist = dbCalloc(n+1,sizeof(char *));
-        p = infocopy;
-        for (i = 0; i < n; i++) {
-            matchlist[i] = p;
-            if (i < n - 1) {
-                p = strchr(p, ' ');
-                *p++ = 0;
-                while (*p == ' ') p++;
-            }
-        }
-        matchlist[n] = NULL;
-    }
-    
-    dbInitEntry(pdbbase, &dbentry);
-    for (status = dbFirstRecordType(&dbentry); !status; status = dbNextRecordType(&dbentry))
-    for (status = dbFirstRecord(&dbentry); !status; status = dbNextRecord(&dbentry))
-    for (status = dbFirstInfo(&dbentry); !status; status = dbNextInfo(&dbentry))
-    {
-        if (matchlist)
-        {
-            char **match;
-            const char *name = dbGetInfoName(&dbentry);
-
-            for (match = matchlist; *match; match++)
-            {
-                if (epicsStrGlobMatch(name, *match))
-                {
-                    status = func(&dbentry, usr);
-                    break; /* match each entry only once */
-                }
-            }
-        }
-        else
-            status = func(&dbentry, usr);
-        if (status) goto end;
-    }
-    status = 0;
-end:
-    dbFinishEntry(&dbentry);
-    free(matchlist);
-    free(infocopy);
-    return status;
-}
-
-static long dbPrintInfo(DBENTRY *pdbentry, void* usr)
-{
     void* p;
     
-    printf("%s %s \"%s\"", dbGetRecordName(pdbentry), dbGetInfoName(pdbentry), dbGetInfoString(pdbentry));
-    if ((p = dbGetInfoPointer(pdbentry)) != NULL)
-        printf(" %p", p);
-    printf("\n");
-    return 0;
+    dbInitEntry(pdbbase, &dbentry);
+    while (dbNextMatchingInfo(&dbentry, patternlist) == 0)
+    {
+        printf("%s.%s \"%s\"", dbGetRecordName(&dbentry), dbGetInfoName(&dbentry), dbGetInfoString(&dbentry));
+        if ((p = dbGetInfoPointer(&dbentry)) != NULL) printf(" %p", p);
+        printf("\n");
+    }
 }
 
-long dbli(const char* infopatterns)
+/* for vxWorks shell: up to 10 args */
+void dbli(const char* p0, const char* p1, const char* p2, const char* p3, const char* p4, const char* p5, const char* p6, const char* p7, const char* p8, const char* p9)
 {
-    return forEachInfo(infopatterns, dbPrintInfo, NULL);
+    const char* patternlist[11];
+    patternlist[0] = p0;
+    patternlist[1] = p1;
+    patternlist[2] = p2;
+    patternlist[3] = p3;
+    patternlist[4] = p4;
+    patternlist[5] = p5;
+    patternlist[6] = p6;
+    patternlist[7] = p7;
+    patternlist[8] = p8;
+    patternlist[9] = p9;
+    patternlist[10] = NULL;
+    dblilist(patternlist);
 }
 
 static const iocshFuncDef dbliDef =
     { "dbli", 1, (const iocshArg *[]) {
-    &(iocshArg) { "info pattern ...", iocshArgString },
+    &(iocshArg) { "pattern...", iocshArgArgv },
 }};
 
 void dbliFunc(const iocshArgBuf *args)
 {
-    dbli(args[0].sval);
+    dblilist((const char**)args[0].aval.av+1);
 }
 
 static void dbliRegistrar(void)
