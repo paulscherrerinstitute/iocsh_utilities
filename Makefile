@@ -38,7 +38,6 @@ endif
 SOURCES_3.14 += dbli.c
 DBDS_3.14    += dbli.dbd
 
-SOURCES_3.14.12 += dbla.c
-DBDS_3.14.12    += dbla.dbd
 
-SOURCES_vxWorks += bootNotify.c
+SOURCES_3.14 += dbla.c
+DBDS_3.14    += dbla.dbd

@@ -2,6 +2,7 @@
 #include "epicsString.h"
 #include "epicsStdioRedirect.h"
 #include "iocsh.h"
+#include "epicsVersion.h"
 #include "epicsExport.h"
 
 /* it is just crazy how much we would have to include to get this definition */
@@ -9,6 +10,7 @@ extern DBBASE *pdbbase;
 
 long epicsShareAPI dbla(const char* match)
 {
+#if EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION >= 31411
     DBENTRY dbEntry;
     long status;
     const char* alias;
@@ -30,6 +32,7 @@ long epicsShareAPI dbla(const char* match)
         }
     }
     dbFinishEntry(&dbEntry);   
+#endif
     return 0;
 }
 
@@ -41,7 +44,7 @@ long __dbla(const char* match) __attribute__ ((alias ("dbla")));
 
 static const iocshFuncDef dblaDef =
     { "dbla", 1, (const iocshArg *[]) {
-    &(iocshArg) { "record name pattern", iocshArgString },
+    &(iocshArg) { "record_name_pattern", iocshArgString },
 }};
 
 void dblaFunc(const iocshArgBuf *args)
