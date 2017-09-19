@@ -59,7 +59,7 @@ long cal(const char* match)
             sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
             if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match))
             {
-                printf("%s%s%s:%i --> %s\n",
+                printf("%s%s%s:%i ==> %s\n",
                     client->pUserName ? client->pUserName : "",
                     client->pUserName ? "@" : "",
                     client->pHostName ? client->pHostName : (ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP)), (clientIP)),
