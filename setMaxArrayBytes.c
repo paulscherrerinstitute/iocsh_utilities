@@ -14,6 +14,7 @@
 extern DBBASE *pdbbase;
 int setMaxArrayBytesDebug;
 epicsExportAddress(int, setMaxArrayBytesDebug);
+extern long caFieldSize(int type, long nelem);
 
 static void setMaxArrayBytes(initHookState initState)
 {
@@ -62,7 +63,7 @@ static void setMaxArrayBytes(initHookState initState)
                     continue;
                 }
                 prset->cvt_dbaddr(&addr);
-                size = dbBufferSize(addr.field_type, 0, addr.no_elements);
+                size = caFieldSize(addr.field_type, addr.no_elements);
                 if (size > maxNeeded) maxNeeded = size;
             
                 if (setMaxArrayBytesDebug)
@@ -72,7 +73,6 @@ static void setMaxArrayBytes(initHookState initState)
         }
     }
     dbFinishEntry(&dbEntry);
-    maxNeeded += 450; /* space for overhead (sizeof(dbr_ctrl_enum) == 422) */
     envGetLongConfigParam(&EPICS_CA_MAX_ARRAY_BYTES, &maxBytes);
     if (maxNeeded > maxBytes)
     {

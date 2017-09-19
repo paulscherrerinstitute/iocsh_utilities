@@ -32,6 +32,7 @@ DBDS_3.14    += mlock.dbd
 
 ifndef BASE_3_16
 SOURCES_3.14 += setMaxArrayBytes.c
+SOURCES_3.14 += caFieldSize.c
 DBDS_3.14    += setMaxArrayBytes.dbd
 endif
 
