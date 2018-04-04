@@ -46,8 +46,10 @@ static void execFunc (const iocshArgBuf *args)
 
     if (args[0].sval == NULL)
     {
-        system(getenv("SHELL"));
-        return;
+        p = getenv("SHELL");
+        if (!p) p = "/bin/sh";
+        strncpy(commandline, p, sizeof(commandline)-1);
+        status = system(commandline);
     }
     else
     {
@@ -79,6 +81,11 @@ static void execFunc (const iocshArgBuf *args)
         if (execDebug) fprintf(stderr, "system(%s)\n", commandline);
         status = system(commandline);
     }
+    if (status == -1)
+    {
+        fprintf (stderr, "system(%s) failed: %s\n", commandline, strerror(errno));
+        return;
+    }    
     if (WIFSIGNALED(status))
     {
 #ifdef __USE_GNU
