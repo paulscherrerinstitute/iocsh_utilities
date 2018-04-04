@@ -28,7 +28,7 @@ long epicsShareAPI dbla(const char* match)
 
         if (!match || epicsStrGlobMatch(realname, match) || epicsStrGlobMatch(alias, match))
         {
-            printf("%s --> %s\n", alias, realname);
+            printf("%s -> %s\n", alias, realname);
         }
     }
     dbFinishEntry(&dbEntry);   
