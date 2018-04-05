@@ -13,16 +13,17 @@
 #ifdef vxWorks
 #include <sysLib.h>
 #endif
-#include <dbScan.h>
-#include <dbStaticLib.h>
-#include <dbAccess.h>
-#include <epicsVersion.h>
+#include "dbScan.h"
+#include "dbStaticLib.h"
+#include "dbAccess.h"
+#include "epicsVersion.h"
 #ifdef BASE_VERSION
 #define EPICS_3_13
 extern DBBASE *pdbbase;
 #else
-#include <iocsh.h>
-#include <epicsExport.h>
+#include "iocsh.h"
+#include "epicsStdioRedirect.h"
+#include "epicsExport.h"
 #endif
 
 

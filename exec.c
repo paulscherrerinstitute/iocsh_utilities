@@ -12,7 +12,6 @@
 #define _GNU_SOURCE
 #endif
 #include <iocsh.h>
-#include <stdio.h>
 #ifdef UNIX
 #include <unistd.h>
 #include <stdlib.h>
@@ -22,7 +21,8 @@
 #include <malloc.h>
 #include <errno.h>
 #endif
-#include <epicsExport.h>
+#include "epicsStdioRedirect.h"
+#include "epicsExport.h"
 
 int execDebug;
 epicsExportAddress(int,execDebug);
@@ -66,7 +66,7 @@ static void execFunc (const iocshArgBuf *args)
 
             if (p - commandline + len + 4 >= sizeof(commandline))
             {
-                fprintf (stderr, "command line too long\n");
+                fprintf(stderr, "command line too long\n");
                 return;
             }
 
@@ -83,22 +83,22 @@ static void execFunc (const iocshArgBuf *args)
     }
     if (status == -1)
     {
-        fprintf (stderr, "system(%s) failed: %s\n", commandline, strerror(errno));
+        fprintf(stderr, "system(%s) failed: %s\n", commandline, strerror(errno));
         return;
     }    
     if (WIFSIGNALED(status))
     {
 #ifdef __USE_GNU
-        fprintf (stderr, "%s killed by signal %d: %s\n",
+        fprintf(stderr, "%s killed by signal %d: %s\n",
             args[0].sval, WTERMSIG(status), strsignal(WTERMSIG(status)));
 #else
-        fprintf (stderr, "%s killed by signal %d\n",
+        fprintf(stderr, "%s killed by signal %d\n",
             args[0].sval, WTERMSIG(status));
 #endif
     }
     if (WEXITSTATUS(status))
     {
-        fprintf (stderr, "exit status is %d\n", WEXITSTATUS(status));
+        fprintf(stderr, "exit status is %d\n", WEXITSTATUS(status));
     }
 }
 

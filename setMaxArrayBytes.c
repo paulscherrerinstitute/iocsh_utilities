@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 
 #define DBFLDTYPES_GBLSOURCE
@@ -9,6 +8,7 @@
 #include "recSup.h"
 #include "envDefs.h"
 #include "initHooks.h"
+#include "epicsStdioRedirect.h"
 #include "epicsExport.h"
 
 extern DBBASE *pdbbase;
@@ -27,7 +27,7 @@ static void setMaxArrayBytes(initHookState initState)
     if (initState != initHookAfterFinishDevSup) return;
     
     if (setMaxArrayBytesDebug)
-        printf("reading array sizes\n");
+        fprintf(stderr, "reading array sizes\n");
 
     dbInitEntry(pdbbase,&dbEntry);
 
@@ -45,7 +45,7 @@ static void setMaxArrayBytes(initHookState initState)
             if (dbEntry.pflddes->special != SPC_DBADDR) continue;
         
             if (setMaxArrayBytesDebug)
-                printf("%s.%s\n", dbGetRecordTypeName(&dbEntry), dbGetFieldName(&dbEntry));
+               fprintf(stderr, "%s.%s\n", dbGetRecordTypeName(&dbEntry), dbGetFieldName(&dbEntry));
 
             /* foreach record */
             for (precnode = (dbRecordNode *)ellFirst(&dbEntry.precordType->recList); precnode; precnode = (dbRecordNode *)ellNext(&precnode->node))
@@ -59,7 +59,7 @@ static void setMaxArrayBytes(initHookState initState)
                 prset = dbGetRset(&addr);
                 if (!prset)
                 {
-                    printf("%s no prset\n", addr.precord->name);
+                    fprintf(stderr, "%s no prset\n", addr.precord->name);
                     continue;
                 }
                 prset->cvt_dbaddr(&addr);
@@ -67,7 +67,7 @@ static void setMaxArrayBytes(initHookState initState)
                 if (size > maxNeeded) maxNeeded = size;
             
                 if (setMaxArrayBytesDebug)
-                    printf("%s.%s %s[%ld] %ld bytes\n", addr.precord->name, dbGetFieldName(&dbEntry),
+                    fprintf(stderr, "%s.%s %s[%ld] %ld bytes\n", addr.precord->name, dbGetFieldName(&dbEntry),
                         pamapdbfType[addr.field_type].strvalue+4, addr.no_elements, size);
             }
         }

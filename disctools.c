@@ -11,7 +11,7 @@
 #define _FILE_OFFSET_BITS 64
 
 #include <iocsh.h>
-#include <stdio.h>
+#include <epicsStdioRedirect.h>
 #ifdef UNIX
 #include <string.h>
 #include <dirent.h>

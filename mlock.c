@@ -1,8 +1,8 @@
-#include <iocsh.h>
-#include <epicsExport.h>
+#include "iocsh.h"
+#include "epicsExport.h"
+#include "epicsStdioRedirect.h"
 
 #ifdef UNIX
-#include <stdio.h>
 #include <sys/mman.h>
 #endif
 
@@ -16,7 +16,7 @@ static void mlockFunc(const iocshArgBuf *args)
     status = mlockall(MCL_CURRENT|MCL_FUTURE);
     
     if (status != 0) {
-        perror ("mlock failed");
+        perror("mlock failed");
     }
 }
 
@@ -29,7 +29,7 @@ static void munlockFunc(const iocshArgBuf *args)
     status = munlockall();
     
     if (status != 0) {
-        perror ("mlock failed");
+        perror("mlock failed");
     }
 }
 #endif

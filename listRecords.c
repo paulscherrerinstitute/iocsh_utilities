@@ -11,7 +11,7 @@
 
 #include <stddef.h>
 #include <errno.h>
-#include <epicsVersion.h>
+#include "epicsVersion.h"
 #ifdef BASE_VERSION
 #define EPICS_3_13
 #include <stdio.h>
@@ -19,10 +19,10 @@ long dbl(char *precordTypename, char *filename, char *fields);
 #else
 #define EPICS_3_14
 #include <string.h>
-#include <dbTest.h>
-#include <epicsStdio.h>
-#include <iocsh.h>
-#include <epicsExport.h>
+#include "dbTest.h"
+#include "epicsStdioRedirect.h"
+#include "iocsh.h"
+#include "epicsExport.h"
 #endif
 
 int listRecords(char* filename, char* fields)
@@ -39,7 +39,7 @@ int listRecords(char* filename, char* fields)
             newStdout = fopen(filename, "w");
             if (!newStdout)
             {
-                fprintf (stderr, "Can't open %s for writing: %s\n",
+                fprintf(stderr, "Can't open %s for writing: %s\n",
                     filename, strerror(errno));
                 return errno;
             }
