@@ -34,15 +34,11 @@ static void munlockFunc(const iocshArgBuf *args)
 }
 #endif
 
-static void
-mlockRegister(void)
+static void mlockRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
 #ifdef UNIX
-        iocshRegister(&mlockDef, mlockFunc);
-        iocshRegister(&munlockDef, munlockFunc);
+    iocshRegister(&mlockDef, mlockFunc);
+    iocshRegister(&munlockDef, munlockFunc);
 #endif
-    }
 }
 epicsExportRegistrar(mlockRegister);

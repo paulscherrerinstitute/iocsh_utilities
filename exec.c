@@ -127,15 +127,11 @@ static void sleepFunc (const iocshArgBuf *args)
 static void
 execRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
 #ifdef UNIX
-        iocshRegister (&execDef, execFunc);
-        iocshRegister (&exclDef, execFunc);
-        iocshRegister (&sleepDef, sleepFunc);
+    iocshRegister (&execDef, execFunc);
+    iocshRegister (&exclDef, execFunc);
+    iocshRegister (&sleepDef, sleepFunc);
 #endif
-        firstTime = 0;
-    }
 }
 
 epicsExportRegistrar(execRegister);

@@ -89,10 +89,6 @@ static void setMaxArrayBytes(initHookState initState)
 
 static void setMaxArrayBytesRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
-        initHookRegister(setMaxArrayBytes);
-        firstTime = 0;
-    }
+    initHookRegister(setMaxArrayBytes);
 }
 epicsExportRegistrar(setMaxArrayBytesRegister);

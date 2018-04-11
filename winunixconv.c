@@ -67,11 +67,7 @@ static void winunixconvFunc (const iocshArgBuf *args)
 }
 static void winunixconvRegister(void)
 {
-    static int winunixconvfirstTime = 1;
-    if (winunixconvfirstTime) {
-        iocshRegister (&winunixconvDef, winunixconvFunc);
-        winunixconvfirstTime = 0;
-    }
+    iocshRegister (&winunixconvDef, winunixconvFunc);
 }
 epicsExportRegistrar(winunixconvRegister);
 #endif

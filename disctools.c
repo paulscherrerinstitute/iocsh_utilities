@@ -531,23 +531,19 @@ static void chmodFunc(const iocshArgBuf *args)
 static void
 disctoolsRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
 #ifdef UNIX
-        iocshRegister(&dirDef, dirFunc);
-        iocshRegister(&llDef, dirFunc);
-        iocshRegister(&lsDef, dirFunc);
-        iocshRegister(&mkdirDef, mkdirFunc);
-        iocshRegister(&rmdirDef, rmdirFunc);
-        iocshRegister(&rmDef, rmFunc);
-        iocshRegister(&mvDef, mvFunc);
-        iocshRegister(&cpDef, cpFunc);
-        iocshRegister(&copyDef, cpFunc);
-        iocshRegister(&umaskDef, umaskFunc);
-        iocshRegister(&chmodDef, chmodFunc);
+    iocshRegister(&dirDef, dirFunc);
+    iocshRegister(&llDef, dirFunc);
+    iocshRegister(&lsDef, dirFunc);
+    iocshRegister(&mkdirDef, mkdirFunc);
+    iocshRegister(&rmdirDef, rmdirFunc);
+    iocshRegister(&rmDef, rmFunc);
+    iocshRegister(&mvDef, mvFunc);
+    iocshRegister(&cpDef, cpFunc);
+    iocshRegister(&copyDef, cpFunc);
+    iocshRegister(&umaskDef, umaskFunc);
+    iocshRegister(&chmodDef, chmodFunc);
 #endif
-        firstTime = 0;
-    }
 }
 
 epicsExportRegistrar(disctoolsRegister);

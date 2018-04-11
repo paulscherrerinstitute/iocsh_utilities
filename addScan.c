@@ -115,11 +115,7 @@ static void addScanFunc (const iocshArgBuf *args)
 }
 static void addScanRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
-        iocshRegister (&addScanDef, addScanFunc);
-        firstTime = 0;
-    }
+    iocshRegister (&addScanDef, addScanFunc);
 }
 epicsExportRegistrar(addScanRegister);
 #endif

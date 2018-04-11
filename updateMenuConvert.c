@@ -108,11 +108,7 @@ static void updateMenuConvertFunc (const iocshArgBuf *args)
 }
 static void updateMenuConvertRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
-        iocshRegister (&updateMenuConvertDef, updateMenuConvertFunc);
-        firstTime = 0;
-    }
+    iocshRegister (&updateMenuConvertDef, updateMenuConvertFunc);
 }
 epicsExportRegistrar(updateMenuConvertRegister);
 #endif

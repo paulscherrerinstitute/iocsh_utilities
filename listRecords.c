@@ -68,11 +68,7 @@ static void listRecordsFunc (const iocshArgBuf *args)
 }
 static void listRecordsRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
-        iocshRegister (&listRecordsDef, listRecordsFunc);
-        firstTime = 0;
-    }
+    iocshRegister (&listRecordsDef, listRecordsFunc);
 }
 epicsExportRegistrar(listRecordsRegister);
 #endif

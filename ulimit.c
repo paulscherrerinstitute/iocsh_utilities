@@ -146,13 +146,9 @@ static void ulimitFunc(const iocshArgBuf *args)
 
 static void ulimitRegister(void)
 {
-    static int firstTime = 1;
-    if (firstTime) {
 #ifdef UNIX
-        iocshRegister(&ulimitDef, ulimitFunc);
+    iocshRegister(&ulimitDef, ulimitFunc);
 #endif
-        firstTime = 0;
-    }
 }
 
 epicsExportRegistrar(ulimitRegister);
