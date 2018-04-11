@@ -1,8 +1,15 @@
+/*
+* ulimit - Set resource limits.
+*
+* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
+*/
+
 #include <string.h>
 #include <stdlib.h>
 #ifdef UNIX
 #include <sys/resource.h>
 #endif
+
 #include "iocsh.h"
 #include "epicsStdioRedirect.h"
 #include "epicsExport.h"

@@ -3,26 +3,24 @@
 *  add all breakpoint tables found on this ioc
 *  to the menu convert (used by LINR field)
 *
-*  $Author: zimoch $
-*
-*  $Source: /cvs/G/DRV/misc/updateMenuConvert.c,v $
-*
+* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 */
 
 #include <string.h>
-#include <ellLib.h>
 #include <stdlib.h>
-#include <dbScan.h>
-#include <dbStaticLib.h>
-#include <dbAccess.h>
-#include <epicsVersion.h>
+
+#include "ellLib.h"
+#include "dbScan.h"
+#include "dbStaticLib.h"
+#include "dbAccess.h"
+#include "epicsVersion.h"
 #ifdef BASE_VERSION
 #define EPICS_3_13
 extern DBBASE *pdbbase;
 #else
 #define EPICS_3_14
-#include <iocsh.h>
-#include <epicsExport.h>
+#include "iocsh.h"
+#include "epicsExport.h"
 #endif
 
 typedef struct node {

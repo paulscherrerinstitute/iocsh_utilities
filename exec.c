@@ -1,17 +1,12 @@
 /*
 * exec - execute shell commands.
 *
-* $Author: zimoch $
-* $ID$
-* $Date: 2015/05/18 10:46:32 $
-*
 * DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 */
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-#include <iocsh.h>
 #ifdef UNIX
 #include <unistd.h>
 #include <stdlib.h>
@@ -21,6 +16,8 @@
 #include <malloc.h>
 #include <errno.h>
 #endif
+
+#include "iocsh.h"
 #include "epicsStdioRedirect.h"
 #include "epicsExport.h"
 

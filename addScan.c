@@ -2,9 +2,7 @@
 *
 *  add a new scan rate to the ioc
 *
-*  $Author: zimoch $
-*
-*  $Source: /cvs/G/DRV/misc/addScan.c,v $
+* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 *
 */
 
@@ -13,6 +11,7 @@
 #ifdef vxWorks
 #include <sysLib.h>
 #endif
+
 #include "dbScan.h"
 #include "dbStaticLib.h"
 #include "dbAccess.h"
@@ -25,7 +24,6 @@ extern DBBASE *pdbbase;
 #include "epicsStdioRedirect.h"
 #include "epicsExport.h"
 #endif
-
 
 int addScan (char* ratestr)
 {

@@ -1,17 +1,11 @@
 /*
 * disctools - dir etc.
 *
-* $Author: zimoch $
-* $ID$
-* $Date: 2015/07/22 12:25:23 $
-*
 * DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 */
 
 #define _FILE_OFFSET_BITS 64
 
-#include <iocsh.h>
-#include <epicsStdioRedirect.h>
 #ifdef UNIX
 #include <string.h>
 #include <dirent.h>
@@ -26,7 +20,10 @@
 #include <glob.h>
 #include <errno.h>
 #endif
-#include <epicsExport.h>
+
+#include "iocsh.h"
+#include "epicsStdioRedirect.h"
+#include "epicsExport.h"
 
 #ifdef UNIX
 
