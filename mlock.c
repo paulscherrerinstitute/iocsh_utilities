@@ -1,9 +1,17 @@
+/*
+* mlock - Lock ioc in memory.
+*
+* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
+*/
+
 #include "iocsh.h"
-#include "epicsExport.h"
 #include "epicsStdioRedirect.h"
+#include "epicsExport.h"
 
 #ifdef UNIX
+#include <errno.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #endif
 
 #ifdef UNIX
@@ -16,7 +24,16 @@ static void mlockFunc(const iocshArgBuf *args)
     status = mlockall(MCL_CURRENT|MCL_FUTURE);
     
     if (status != 0) {
-        perror("mlock failed");
+        if (errno == ENOMEM)
+        {
+            struct rlimit rlimit;
+            getrlimit(RLIMIT_MEMLOCK, &rlimit);
+            fprintf(stderr,
+                "mlock failed: limit of %ld kBytes exceeded\n",
+                rlimit.rlim_cur>>10);
+        }
+        else
+            perror("mlock failed");
     }
 }
 
@@ -29,7 +46,7 @@ static void munlockFunc(const iocshArgBuf *args)
     status = munlockall();
     
     if (status != 0) {
-        perror("mlock failed");
+        perror("munlock failed");
     }
 }
 #endif
