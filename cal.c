@@ -44,6 +44,7 @@ long cal(const char* match)
     int matchfield;
     char clientIP[16];
     char fullname[PVNAME_STRINGSZ+5];
+    char clientref[100];
 
     matchfield = match && strchr(match, '.');
 
@@ -52,19 +53,22 @@ long cal(const char* match)
     {
         struct channel_in_use *pciu;
         epicsMutexMustLock(client->chanListLock);
-        
         for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu; pciu = (struct channel_in_use *)ellNext(&pciu->node))
         {
             const char* recname = getAddr(pciu).precord->name;
             sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
-            if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match))
+            sprintf(clientref, "%.36s%s%.*s:%i",
+                client->pUserName ? client->pUserName : "",
+                client->pUserName ? "@" : "",
+                client->pHostName ? (int)strcspn(client->pHostName, "."): 63,
+                client->pHostName ? client->pHostName : (ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP)), (clientIP)),
+                ntohs (client->addr.sin_port));
+            if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match)
+                || epicsStrGlobMatch(client->pUserName, match)
+                || epicsStrGlobMatch(client->pHostName, match)
+                || epicsStrGlobMatch(clientref, match))
             {
-                printf("%s%s%s:%i ==> %s\n",
-                    client->pUserName ? client->pUserName : "",
-                    client->pUserName ? "@" : "",
-                    client->pHostName ? client->pHostName : (ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP)), (clientIP)),
-                    ntohs (client->addr.sin_port),
-                    fullname);
+                printf("%s ==> %s\n", clientref, fullname);
             }
         }
         epicsMutexUnlock(client->chanListLock);
