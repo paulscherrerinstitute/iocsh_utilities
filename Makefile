@@ -33,6 +33,9 @@ DBDS_3.14    += mlock.dbd
 SOURCES_3.14 += ulimit.c
 DBDS_3.14    += ulimit.dbd
 
+SOURCES      += epicsEnvUnset.c
+DBDS_3.14    += epicsEnvUnset.dbd
+
 ifndef BASE_3_16
 SOURCES_3.14 += setMaxArrayBytes.c
 SOURCES_3.14 += caFieldSize.c
