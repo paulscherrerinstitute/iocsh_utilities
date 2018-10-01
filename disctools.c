@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <time.h>
 #include <malloc.h>
 #include <pwd.h>
