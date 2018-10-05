@@ -2,6 +2,6 @@
 #include "db_convert.h"
 
 long caFieldSize(int type, long nelem) {
-    /* round up native type as DBR_CTRL size to next multiple of 4 */
-    return (dbr_size_n(dbf_type_to_DBR_CTRL(dbDBRnewToDBRold[type]), nelem)+3)%4;
+    /* add 4 to native type as DBR_CTRL size to work with new caget */
+    return dbr_size_n(dbf_type_to_DBR_CTRL(dbDBRnewToDBRold[type]), nelem)+4;
 }
