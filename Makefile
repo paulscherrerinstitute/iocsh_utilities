@@ -2,6 +2,9 @@ include /ioc/tools/driver.makefile
 
 BUILDCLASSES += Linux
 
+# cannot build required 'utilities' for vxWorks 6.6
+EXCLUDE_ARCHS += V66
+
 DBDS = -none-
 
 SOURCES      += listRecords.c
@@ -54,5 +57,8 @@ endif
 
 SOURCES_3.14 += dbla.c
 DBDS_3.14    += dbla.dbd
+
+SOURCES_3.14 += termSig.c
+DBDS_3.14 += termSig.dbd
 
 SOURCES_vxWorks += bootNotify.c
