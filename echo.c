@@ -8,8 +8,11 @@
 
 void echo(char* str)
 {
-    dbTranslateEscape(str, str);
-    fputs(str, stdout);
+    if (str)
+    {
+        dbTranslateEscape(str, str);
+        fputs(str, stdout);
+    }
     putchar('\n');
 }
 
