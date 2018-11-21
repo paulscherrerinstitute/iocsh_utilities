@@ -4,15 +4,20 @@
 * DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 */
 
+#include "epicsVersion.h"
+#ifdef BASE_VERSION
+#define EPICS_3_13
+#else
 #include "iocsh.h"
 #include "epicsExport.h"
 #include "epicsStdioRedirect.h"
+#endif
 
 #ifdef vxWorks
 /* Do the next best thing: invalidate the variable name */
 #include <envLib.h>
 #include <string.h>
-epicsShareFunc void epicsShareAPI epicsEnvUnset (const char *name)
+void epicsEnvUnset (const char *name)
 {
     char* var;
 
@@ -25,13 +30,14 @@ epicsShareFunc void epicsShareAPI epicsEnvUnset (const char *name)
 }
 #else
 #include <stdlib.h>
-epicsShareFunc void epicsShareAPI epicsEnvUnset (const char *name)
+void epicsEnvUnset (const char *name)
 {
     if (!name) return;
     unsetenv(name);
 }
 #endif
 
+#ifndef EPICS_3_13
 static const iocshArg epicsEnvUnsetArg0 = { "name", iocshArgString};
 static const iocshArg * const epicsEnvUnsetArgs[1] = { &epicsEnvUnsetArg0 };
 static const iocshFuncDef epicsEnvUnsetDef = { "epicsEnvUnset", 1, epicsEnvUnsetArgs };
@@ -47,3 +53,4 @@ static void epicsEnvUnsetRegister(void)
 }
 
 epicsExportRegistrar(epicsEnvUnsetRegister);
+#endif
