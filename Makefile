@@ -45,10 +45,8 @@ SOURCES_3.14 += caFieldSize.c
 DBDS_3.14    += setMaxArrayBytes.dbd
 endif
 
-ifndef BASE_3_15
-SOURCES_3.14 += echo.c
+SOURCES      += echo.c
 DBDS_3.14    += echo.dbd
-endif
 
 ifndef BASE_7_0
 SOURCES_3.14 += dbli.c

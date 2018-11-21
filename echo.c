@@ -1,22 +1,30 @@
-#include "iocsh.h"
-#include "epicsExport.h"
-#include "epicsStdioRedirect.h"
+#include <stdio.h>
+#include "epicsVersion.h"
+#ifdef BASE_VERSION
+#define EPICS_3_13
+#endif
+
 #include "epicsString.h"
 
-static const iocshArg echoArg0 = { "arguments", iocshArgArgv };
+void echo(char* str)
+{
+    dbTranslateEscape(str, str);
+    fputs(str, stdout);
+    putchar('\n');
+}
+
+#ifndef EPICS_3_13
+#include "iocsh.h"
+#include "epicsStdioRedirect.h"
+#include "epicsExport.h"
+
+static const iocshArg echoArg0 = { "string", iocshArgString };
 static const iocshArg * const echoArgs[1] = { &echoArg0 };
-static const iocshFuncDef echoDef = { "echo", 2, echoArgs };
+static const iocshFuncDef echoDef = { "echo", 1, echoArgs };
 
 static void echoFunc(const iocshArgBuf *args)
 {
-    int i;
-    for (i = 1; i < args[0].aval.ac; i++)
-    {
-        if (i>1) putchar(' ');
-        dbTranslateEscape(args[0].aval.av[i], args[0].aval.av[i]);
-        fputs(args[0].aval.av[i], stdout);
-    }
-    putchar('\n');
+    echo (args[0].sval);
 }
 
 static void echoRegister(void)
@@ -25,3 +33,4 @@ static void echoRegister(void)
 }
 
 epicsExportRegistrar(echoRegister);
+#endif
