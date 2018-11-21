@@ -18,7 +18,7 @@
 #define EPICS_3_13
 extern DBBASE *pdbbase;
 #else
-#define EPICS_3_14
+#include "epicsStdioRedirect.h"
 #include "iocsh.h"
 #include "epicsExport.h"
 #endif
@@ -85,6 +85,7 @@ int updateMenuConvert ()
         for (; i<nChoice; i++)
         {
             pbtable = (node*)ellFirst(&missing);
+            printf("Adding breakpoint table \"%s\" to menuConvert.\n", pbtable->value);
             papChoiceName[i] = pbtable->name;
             papChoiceValue[i] = pbtable->value;
             ellDelete(&missing, &pbtable->node);
@@ -95,10 +96,14 @@ int updateMenuConvert ()
         menuConvert->papChoiceValue=papChoiceValue;
         menuConvert->nChoice = nChoice;
     }
+    else
+    {
+        printf("Nothing to add to menuConvert.\n");
+    }
     return 0;
 }
 
-#ifdef EPICS_3_14
+#ifndef EPICS_3_13
 static const iocshFuncDef updateMenuConvertDef = { "updateMenuConvert", 0, NULL };
 static void updateMenuConvertFunc (const iocshArgBuf *args)
 {
