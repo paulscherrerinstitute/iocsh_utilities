@@ -6,7 +6,7 @@
 
 #include "epicsString.h"
 
-void echo(char* str)
+int echo(char* str)
 {
     if (str)
     {
@@ -14,6 +14,7 @@ void echo(char* str)
         fputs(str, stdout);
     }
     putchar('\n');
+    return 0;
 }
 
 #ifndef EPICS_3_13
