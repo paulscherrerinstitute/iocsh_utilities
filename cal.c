@@ -39,8 +39,9 @@ struct dbFldDes{
 #endif
 
 int calDebug = 0;
+#ifndef EPICS_3_13
 epicsExportAddress(int, calDebug);
-
+#endif
 
 long cal(const char* match)
 {
@@ -54,8 +55,8 @@ long cal(const char* match)
     LOCK_CLIENTQ
     for (client = (struct client *)ellNext(&clientQ.node); client; client = (struct client *)ellNext(&client->node))
     {
-        if (calDebug) fprintf(stderr, "host: %s\nuser: %s\n", client->pHostName, client->pUserName);
         struct channel_in_use *pciu;
+        if (calDebug) fprintf(stderr, "host: %s\nuser: %s\n", client->pHostName, client->pUserName);
         epicsMutexMustLock(client->chanListLock);
         for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu; pciu = (struct channel_in_use *)ellNext(&pciu->node))
         {
