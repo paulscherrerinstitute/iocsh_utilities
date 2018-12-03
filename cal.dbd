@@ -1,1 +1,2 @@
 registrar(calRegistrar)
+variable(calDebug, int)

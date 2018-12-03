@@ -38,6 +38,10 @@ struct dbFldDes{
 #define getAddr(pciu) pciu->addr
 #endif
 
+int calDebug = 0;
+epicsExportAddress(int, calDebug);
+
+
 long cal(const char* match)
 {
     struct client *client;
@@ -51,21 +55,26 @@ long cal(const char* match)
     LOCK_CLIENTQ
     for (client = (struct client *)ellNext(&clientQ.node); client; client = (struct client *)ellNext(&client->node))
     {
+        if (calDebug) fprintf(stderr, "client: %s@%s\n", client->pUserName, client->pHostName);
         struct channel_in_use *pciu;
         epicsMutexMustLock(client->chanListLock);
         for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu; pciu = (struct channel_in_use *)ellNext(&pciu->node))
         {
             const char* recname = getAddr(pciu).precord->name;
+            if (calDebug) fprintf(stderr, "channel: %s\n", recname);
+            if (!recname) continue;
             sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
+            if (calDebug) fprintf(stderr, "fullname: %s\n", fullname);
             sprintf(clientref, "%.36s%s%.*s:%i",
                 client->pUserName ? client->pUserName : "",
                 client->pUserName ? "@" : "",
                 client->pHostName ? (int)strcspn(client->pHostName, "."): 63,
                 client->pHostName ? client->pHostName : (ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP)), (clientIP)),
                 ntohs (client->addr.sin_port));
+            if (calDebug) fprintf(stderr, "clientref: %s\n", clientref);
             if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match)
-                || epicsStrGlobMatch(client->pUserName, match)
-                || epicsStrGlobMatch(client->pHostName, match)
+                || (client->pUserName && epicsStrGlobMatch(client->pUserName, match))
+                || (client->pHostName && epicsStrGlobMatch(client->pHostName, match))
                 || epicsStrGlobMatch(clientref, match))
             {
                 printf("%s ==> %s\n", clientref, fullname);
