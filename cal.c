@@ -46,7 +46,6 @@ long cal(const char* match)
 {
     struct client *client;
     int matchfield;
-    char clientIP[16];
     char fullname[PVNAME_STRINGSZ+5];
     char clientref[100];
 
@@ -55,22 +54,31 @@ long cal(const char* match)
     LOCK_CLIENTQ
     for (client = (struct client *)ellNext(&clientQ.node); client; client = (struct client *)ellNext(&client->node))
     {
-        if (calDebug) fprintf(stderr, "client: %s@%s\n", client->pUserName, client->pHostName);
+        if (calDebug) fprintf(stderr, "host: %s\nuser: %s\n", client->pHostName, client->pUserName);
         struct channel_in_use *pciu;
         epicsMutexMustLock(client->chanListLock);
         for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu; pciu = (struct channel_in_use *)ellNext(&pciu->node))
         {
+            int userlen;
             const char* recname = getAddr(pciu).precord->name;
             if (calDebug) fprintf(stderr, "channel: %s\n", recname);
             if (!recname) continue;
             sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
             if (calDebug) fprintf(stderr, "fullname: %s\n", fullname);
-            sprintf(clientref, "%.36s%s%.*s:%i",
-                client->pUserName ? client->pUserName : "",
-                client->pUserName ? "@" : "",
-                client->pHostName ? (int)strcspn(client->pHostName, "."): 63,
-                client->pHostName ? client->pHostName : (ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP)), (clientIP)),
-                ntohs (client->addr.sin_port));
+            userlen = client->pUserName ? sprintf(clientref, "%.36s@", client->pUserName) : 0;
+            if (client->pHostName)
+            {
+                sprintf(clientref + userlen, "%.*s:%i",
+                    (int)strcspn(client->pHostName, "."),
+                    client->pHostName, ntohs(client->addr.sin_port));
+            }
+            else
+            {
+                char clientIP[32];
+                ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP));
+                if (calDebug) fprintf(stderr, "clientIP: %s\n", clientIP);
+                sprintf(clientref + userlen, "%s", clientIP);
+            }
             if (calDebug) fprintf(stderr, "clientref: %s\n", clientref);
             if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match)
                 || (client->pUserName && epicsStrGlobMatch(client->pUserName, match))
