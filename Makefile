@@ -59,7 +59,7 @@ DBDS_3.14    += dbla.dbd
 SOURCES_3.14 += termSig.c
 DBDS_3.14 += termSig.dbd
 
-SOURCES_3.14 += threadPrio.c
-DBDS_3.14 += threadPrio.dbd
+SOURCES_3.14 += threads.c
+DBDS_3.14 += threads.dbd
 
 SOURCES_vxWorks += bootNotify.c
