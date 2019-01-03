@@ -12,19 +12,12 @@ static const iocshArg epicsThreadSetPriorityArg2 = { "[+/-diff]", iocshArgInt };
 static const iocshArg * const epicsThreadSetPriorityArgs[3] = { &epicsThreadSetPriorityArg0, &epicsThreadSetPriorityArg1, &epicsThreadSetPriorityArg2};
 static const iocshFuncDef epicsThreadSetPriorityDef = { "epicsThreadSetPriority", 3, epicsThreadSetPriorityArgs };
 
-static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
-{
-    const char* threadname = args[0].sval;
-    const char* priostr = args[1].sval;
-    int diff = args[2].ival;
-    char* end;
-    epicsThreadId id;
-    unsigned int priority;
 
-    if (!threadname || !*threadname || !priostr || !*priostr) {
-        fprintf(stderr, "usage: epicsThreadSetPriorityFunc thread, priority");
-        return;
-    }
+static epicsThreadId epicsThreadGetIdFromNameOrNumber(const char* threadname)
+{
+    epicsThreadId id;
+    char* end;
+
 #if defined(__LP64__) || defined(_WIN64)
     id = (epicsThreadId)(size_t) strtoull(threadname, &end, 0);
 #else
@@ -36,19 +29,26 @@ static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
         if (!id)
         {
             fprintf(stderr, "Thread %s not found.\n", threadname);
-            return;
+            return NULL;
         }
     }
+    return id;
+}
+
+static int epicsThreadStrToPrio(const char* priostr, int diff)
+{
+    int priority;
+    char* end;
 
     priority = strtol(priostr, &end, 0);
     if (!*end)
     {
-        if ((int)priority < epicsThreadPriorityMin ||
+        if (priority < epicsThreadPriorityMin ||
             priority > epicsThreadPriorityMax)
         {
             fprintf(stderr, "Priority %s out of range %d-%d.\n",
                 priostr, epicsThreadPriorityMin, epicsThreadPriorityMax);
-            return;
+            return -1;
         }
     }
     else
@@ -82,14 +82,33 @@ static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
             else
             {
                 fprintf(stderr, "Unknown priority %s.\n", priostr);
-                return;
+                return -1;
             }
         }
         while (diff++ < 0 && priority > epicsThreadPriorityMin)
-            epicsThreadHighestPriorityLevelBelow(priority, &priority);
+            epicsThreadHighestPriorityLevelBelow(priority, (unsigned int *)&priority);
         while (diff-- > 0 && priority < epicsThreadPriorityMax)
-            epicsThreadLowestPriorityLevelAbove(priority, &priority);
+            epicsThreadLowestPriorityLevelAbove(priority, (unsigned int *)&priority);
     }
+    return priority;
+}
+
+static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
+{
+    const char* threadname = args[0].sval;
+    const char* priostr = args[1].sval;
+    int diff = args[2].ival;
+    epicsThreadId id;
+    int priority;
+
+    if (!threadname || !*threadname || !priostr || !*priostr) {
+        fprintf(stderr, "usage: epicsThreadSetPriorityFunc thread, priority");
+        return;
+    }
+    id = epicsThreadGetIdFromNameOrNumber(threadname);
+    if (!id) return;
+    priority = epicsThreadStrToPrio(priostr, diff);
+    if (priority < 0) return;
     epicsThreadSetPriority(id, priority);
 }
 
