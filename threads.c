@@ -25,8 +25,11 @@ typedef unsigned int cpu_set_t;
 #endif
 
 #if !__GLIBC_PREREQ(2,4)
+#define pthread_t unsigned int
 #define pthread_getaffinity_np(id, size, set) ENOSYS
 #define pthread_setaffinity_np(id, size, set) ENOSYS
+#define pthread_self() 0
+#define epicsThreadGetPosixThreadId(id) 0
 #endif
 
 /* Original epicsThreadPriorityMax 99 is wrong */
@@ -203,12 +206,12 @@ static int epicsThreadParseAffinityList(const char* cpulist, cpu_set_t* cpuset)
 
 int epicsThreadGetAffinity(epicsThreadId id, cpu_set_t* cpuset)
 {
-    int status = ESRCH;
+    int status = ENOSYS;
     pthread_t tid = 0;
 
     if (id) tid = epicsThreadGetPosixThreadId(id);
-    if (!tid) tid = pthread_self();
-    status = pthread_getaffinity_np(tid, sizeof(cpu_set_t), cpuset);
+    else tid = pthread_self();
+    if (tid) status = pthread_getaffinity_np(tid, sizeof(cpu_set_t), cpuset);
     switch (status)
     {
         case 0:
@@ -247,12 +250,12 @@ static void epicsThreadGetAffinityFunc(const iocshArgBuf *args)
 
 int epicsThreadSetAffinity(epicsThreadId id, cpu_set_t* cpuset)
 {
-    int status = ESRCH;
+    int status = ENOSYS;
     pthread_t tid = 0;
 
     if (id) tid = epicsThreadGetPosixThreadId(id);
-    if (!tid) tid = pthread_self();
-    status = pthread_setaffinity_np(tid, sizeof(cpuset), cpuset);
+    else tid = pthread_self();
+    if (tid) status = pthread_setaffinity_np(tid, sizeof(cpuset), cpuset);
     switch (status)
     {
         case 0:
