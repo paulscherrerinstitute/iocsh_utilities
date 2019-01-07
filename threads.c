@@ -8,6 +8,7 @@
 #include "epicsString.h"
 #include "epicsThread.h"
 #include "iocsh.h"
+#include "errlog.h"
 #include "epicsExport.h"
 
 #ifndef CPU_SETSIZE
@@ -28,6 +29,9 @@ typedef unsigned int cpu_set_t;
 #define pthread_setaffinity_np(id, size, set) ENOSYS
 #endif
 
+/* Original epicsThreadPriorityMax 99 is wrong */
+#undef epicsThreadPriorityMax
+#define epicsThreadPriorityMax (100)
 
 static const iocshArg epicsThreadSetPriorityArg0 = { "thread", iocshArgString };
 static const iocshArg epicsThreadSetPriorityArg1 = { "priority", iocshArgString };
@@ -65,6 +69,7 @@ static int epicsThreadStrToPrio(const char* priostr, int diff)
     priority = strtol(priostr, &end, 0);
     if (!*end)
     {
+
         if (priority < epicsThreadPriorityMin ||
             priority > epicsThreadPriorityMax)
         {
@@ -109,7 +114,7 @@ static int epicsThreadStrToPrio(const char* priostr, int diff)
         }
         while (diff++ < 0 && priority > epicsThreadPriorityMin)
             epicsThreadHighestPriorityLevelBelow(priority, (unsigned int *)&priority);
-        while (diff-- > 0 && priority < epicsThreadPriorityMax)
+        while (diff-- > 0 && priority < 100)
             epicsThreadLowestPriorityLevelAbove(priority, (unsigned int *)&priority);
     }
     return priority;
@@ -122,6 +127,7 @@ static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
     int diff = args[2].ival;
     epicsThreadId id;
     int priority;
+    int old_errVerbose = errVerbose;
 
     if (!threadname || !*threadname || !priostr || !*priostr)
     {
@@ -132,7 +138,9 @@ static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
     if (!id) return;
     priority = epicsThreadStrToPrio(priostr, diff);
     if (priority < 0) return;
+    errVerbose = 1;
     epicsThreadSetPriority(id, priority);
+    errVerbose = old_errVerbose;
 }
 
 void epicsThreadPrintAffinityList(cpu_set_t* cpuset)
