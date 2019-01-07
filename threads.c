@@ -146,7 +146,7 @@ static void epicsThreadSetPriorityFunc(const iocshArgBuf *args)
 void epicsThreadPrintAffinityList(cpu_set_t* cpuset)
 {
     int cpu, first = -2;
-    
+
     for (cpu = 0; cpu <= CPU_SETSIZE; cpu++)
     {
         if (cpu < CPU_SETSIZE && CPU_ISSET(cpu, cpuset))
@@ -204,13 +204,14 @@ static int epicsThreadParseAffinityList(const char* cpulist, cpu_set_t* cpuset)
 int epicsThreadGetAffinity(epicsThreadId id, cpu_set_t* cpuset)
 {
     int status = ESRCH;
-    if (id) status = pthread_getaffinity_np(epicsThreadGetPosixThreadId(id), sizeof(cpu_set_t), cpuset);
+    pthread_t tid = 0;
+
+    if (id) tid = epicsThreadGetPosixThreadId(id);
+    if (!tid) tid = pthread_self();
+    status = pthread_getaffinity_np(tid, sizeof(cpu_set_t), cpuset);
     switch (status)
     {
         case 0:
-            break;
-        case EINVAL:
-            fprintf(stderr, "epicsThreadGetAffinity: invalid mask\n");
             break;
         case ESRCH:
             fprintf(stderr, "epicsThreadGetAffinity: invalid thread\n");
@@ -240,20 +241,24 @@ static void epicsThreadGetAffinityFunc(const iocshArgBuf *args)
         return;
     }
     id = epicsThreadGetIdFromNameOrNumber(threadname);
-    epicsThreadGetAffinity(id, &cpuset);
+    if (epicsThreadGetAffinity(id, &cpuset) != 0) return;
     epicsThreadPrintAffinityList(&cpuset);
 }
 
 int epicsThreadSetAffinity(epicsThreadId id, cpu_set_t* cpuset)
 {
     int status = ESRCH;
-    if (id) status = pthread_setaffinity_np(epicsThreadGetPosixThreadId(id), sizeof(cpuset), cpuset);
+    pthread_t tid = 0;
+
+    if (id) tid = epicsThreadGetPosixThreadId(id);
+    if (!tid) tid = pthread_self();
+    status = pthread_setaffinity_np(tid, sizeof(cpuset), cpuset);
     switch (status)
     {
         case 0:
             break;
         case EINVAL:
-            fprintf(stderr, "epicsThreadSetAffinity: invalid mask\n");
+            fprintf(stderr, "epicsThreadSetAffinity: no cpu left to execute\n");
             break;
         case ESRCH:
             fprintf(stderr, "epicsThreadSetAffinity: invalid thread\n");
@@ -281,14 +286,14 @@ static void epicsThreadSetAffinityFunc(const iocshArgBuf *args)
 
     if (!threadname || !*threadname || !cpulist || !*cpulist)
     {
-        fprintf(stderr, "usage: epicsThreadSetAffinity thread, affinitymask\n");
+        fprintf(stderr, "usage: epicsThreadSetAffinity thread, affinitylist\n");
         return;
     }
     id = epicsThreadGetIdFromNameOrNumber(threadname);
-    epicsThreadGetAffinity(id, &cpuset);
+    if (epicsThreadGetAffinity(id, &cpuset) != 0) return;
     epicsThreadParseAffinityList(cpulist, &cpuset);
-    epicsThreadSetAffinity(id, &cpuset);
-    epicsThreadGetAffinity(id, &cpuset);
+    if (epicsThreadSetAffinity(id, &cpuset) != 0) return;
+    if (epicsThreadGetAffinity(id, &cpuset) != 0) return;
     epicsThreadPrintAffinityList(&cpuset);
 }
 
