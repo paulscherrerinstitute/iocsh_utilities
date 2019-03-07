@@ -204,7 +204,7 @@ const char* expand(const char* src)
 
 int exec(const char* cmd)
 {
-    const char *expanded = expand(cmd);
+    char *expanded = (char*)expand(cmd);
     if (!expanded || !*expanded) return 0;
     printf("%s\n", expanded);
 #ifdef _WRS_VXWORKS_MAJOR
@@ -216,7 +216,7 @@ int exec(const char* cmd)
     }
 #else
 /* vxWorks 5 */
-    return execute((char*)expanded);
+    return execute(expanded);
 #endif
 }
 #endif
