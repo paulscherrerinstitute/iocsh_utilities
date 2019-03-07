@@ -132,3 +132,92 @@ execRegister(void)
 }
 
 epicsExportRegistrar(execRegister);
+
+#ifdef vxWorks
+#include <vxWorks.h>
+#ifdef _WRS_VXWORKS_MAJOR
+/* vxWorks 6+ */
+#include <private/shellLibP.h>
+#else
+/* vxWorks 5 */
+#include <shellLib.h>
+#include "strdup.h"
+#endif
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "epicsVersion.h"
+#define EPICSVER EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION
+
+#include "macLib.h"
+#include "epicsString.h"
+
+const char* expand(const char* src)
+{
+    MAC_HANDLE *mac = NULL;
+    static char buffer[512];
+
+    if (!src || !*src) return src;
+    
+    if (!strchr(src, '$'))
+    {
+        return src;
+    }
+    
+    if (macCreateHandle(&mac,(
+    #if (EPICSVER>=31501)
+        const
+        #endif
+        char*[]){ "", "environ", NULL, NULL }) != 0) return src;
+    macSuppressWarning(mac, 1);
+    #if (EPICSVER<31403)
+    {
+        extern char** ppGlobalEnviron;
+        char** pairs;
+        /* Have no environment macro substitution, thus load envionment explicitly */
+        /* Actually, environmant macro substitution was introduced in 3.14.3 */
+        for (pairs = ppGlobalEnviron; *pairs; pairs++)
+        {
+            char* var, *eq;
+
+            /* take a copy to replace '=' with null byte */
+            if ((var = strdup(*pairs)) == NULL) break;
+            eq = strchr(var, '=');
+            if (eq)
+            {
+                *eq = 0;
+                macPutValue(mac, var, eq+1);
+            }
+            free(var);            
+        }
+    }
+    #endif
+    #if (EPICSVER<31400)
+    macExpandString(mac, (char*)src, buffer, sizeof(buffer)/2);
+    #else
+    macExpandString(mac, src, buffer, sizeof(buffer)/-1);
+    #endif
+    macDeleteHandle(mac);
+    return buffer;
+}
+
+int exec(const char* cmd)
+{
+    const char *expanded = expand(cmd);
+    if (!expanded || !*expanded) return 0;
+    printf("%s\n", expanded);
+#ifdef _WRS_VXWORKS_MAJOR
+/* vxWorks 6 */
+    {
+        SHELL_EVAL_VALUE result;
+        shellInterpEvaluate(expanded, "C", &result);
+        return result.value.intVal;
+    }
+#else
+/* vxWorks 5 */
+    return execute((char*)expanded);
+#endif
+}
+#endif
+

@@ -27,7 +27,7 @@ SOURCES_3.13 += glob.c
 SOURCES_3.14 += disctools.c
 DBDS_3.14    += disctools.dbd
 
-SOURCES_3.14 += exec.c
+SOURCES      += exec.c
 DBDS_3.14    += exec.dbd
 
 SOURCES_3.14 += mlock.c
