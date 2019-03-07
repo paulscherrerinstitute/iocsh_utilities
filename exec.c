@@ -153,23 +153,24 @@ epicsExportRegistrar(execRegister);
 #include "macLib.h"
 #include "epicsString.h"
 
-const char* expand(const char* src)
+char* expand(const char* src)
 {
     MAC_HANDLE *mac = NULL;
-    static char buffer[512];
+    size_t len, linesize;
+    static char *expanded;
 
-    if (!src || !*src) return src;
+    if (!src || !*src) return (char*)src;
     
     if (!strchr(src, '$'))
     {
-        return src;
+        return (char*)src;
     }
     
     if (macCreateHandle(&mac,(
     #if (EPICSVER>=31501)
         const
         #endif
-        char*[]){ "", "environ", NULL, NULL }) != 0) return src;
+        char*[]){ "", "environ", NULL, NULL }) != 0) return NULL;
     macSuppressWarning(mac, 1);
     #if (EPICSVER<31403)
     {
@@ -193,18 +194,25 @@ const char* expand(const char* src)
         }
     }
     #endif
-    #if (EPICSVER<31400)
-    macExpandString(mac, (char*)src, buffer, sizeof(buffer)/2);
-    #else
-    macExpandString(mac, src, buffer, sizeof(buffer)/-1);
-    #endif
+
+    linesize = 128;
+    expanded = malloc(linesize);
+#if (EPICSVER<31400)
+    while (expanded && (len = labs(macExpandString(mac, (char*)src, expanded, linesize/2))) >= linesize/2)
+#else       
+    while (expanded && (len = labs(macExpandString(mac, src, expanded, linesize-1))) >= linesize-2)
+#endif
+    {
+        free(expanded);
+        if ((expanded = malloc(linesize *= 2)) == NULL) break;
+    }
     macDeleteHandle(mac);
-    return buffer;
+    return expanded;
 }
 
 int exec(const char* cmd)
 {
-    char *expanded = (char*)expand(cmd);
+    char *expanded = expand(cmd);
     if (!expanded || !*expanded) return 0;
     printf("%s\n", expanded);
 #ifdef _WRS_VXWORKS_MAJOR
