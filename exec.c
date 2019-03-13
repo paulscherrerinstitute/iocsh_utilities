@@ -4,10 +4,13 @@
 * DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
 */
 
+#include "epicsVersion.h"
+#define EPICSVER EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION
+
+#ifdef UNIX
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-#ifdef UNIX
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -17,12 +20,14 @@
 #include <errno.h>
 #endif
 
+int execDebug;
+
+#if (EPICSVER>=31400)
 #include "iocsh.h"
 #include "epicsStdioRedirect.h"
 #include "epicsExport.h"
-
-int execDebug;
 epicsExportAddress(int,execDebug);
+#endif
 
 #ifdef UNIX
 static const iocshArg execArg0 = { "command", iocshArgString };
@@ -119,8 +124,9 @@ static void sleepFunc (const iocshArgBuf *args)
         }
     }
 }
-#endif
+#endif /*UNIX*/
 
+#if (EPICSVER>=31400)
 static void
 execRegister(void)
 {
@@ -128,27 +134,25 @@ execRegister(void)
     iocshRegister (&execDef, execFunc);
     iocshRegister (&exclDef, execFunc);
     iocshRegister (&sleepDef, sleepFunc);
-#endif
+#endif /* UNIX */
 }
 
 epicsExportRegistrar(execRegister);
+#endif /* EPICSVER>=31400 */
 
 #ifdef vxWorks
 #include <vxWorks.h>
-#ifdef _WRS_VXWORKS_MAJOR
-/* vxWorks 6+ */
-#include <private/shellLibP.h>
-#else
-/* vxWorks 5 */
+#ifndef _WRS_VXWORKS_MAJOR
+#define VXWORKS_5
 #include <shellLib.h>
 #include "strdup.h"
+#else
+#include <private/shellLibP.h>
 #endif
 
 #include <stdlib.h>
 #include <string.h>
-
-#include "epicsVersion.h"
-#define EPICSVER EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION
+#include <stdio.h>
 
 #include "macLib.h"
 #include "epicsString.h"
@@ -215,17 +219,15 @@ int exec(const char* cmd)
     char *expanded = expand(cmd);
     if (!expanded || !*expanded) return 0;
     printf("%s\n", expanded);
-#ifdef _WRS_VXWORKS_MAJOR
-/* vxWorks 6 */
+#ifdef VXWORKS_5
+    return execute(expanded);
+#else
     {
         SHELL_EVAL_VALUE result;
         shellInterpEvaluate(expanded, "C", &result);
         return result.value.intVal;
     }
-#else
-/* vxWorks 5 */
-    return execute(expanded);
 #endif
 }
-#endif
+#endif /* vxWorks */
 
