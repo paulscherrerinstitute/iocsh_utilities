@@ -16,7 +16,6 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <string.h>
-#include <malloc.h>
 #include <errno.h>
 #endif
 
