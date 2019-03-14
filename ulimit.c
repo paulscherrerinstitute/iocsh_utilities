@@ -46,11 +46,15 @@ resources[] = {
  {'e', RLIMIT_NICE,        "scheduling priority",  "",        0},
 #endif
  {'f', RLIMIT_FSIZE,       "file size",            "blocks",  9},
+#ifdef RLIMIT_SIGPENDING
  {'i', RLIMIT_SIGPENDING,  "pending signals",      "",        0},
+#endif
  {'l', RLIMIT_MEMLOCK,     "max memory size",      "kbytes", 10},
  {'m', RLIMIT_RSS,         "max memory size",      "kbytes", 10},
  {'n', RLIMIT_NOFILE,      "open files",           "",        0},
+#ifdef RLIMIT_MSGQUEUE
  {'q', RLIMIT_MSGQUEUE,    "POSIX message queues", "bytes",   0},
+#endif
 #ifdef RLIMIT_RTPRIO
  {'r', RLIMIT_RTPRIO,      "real-time priority",   "",        0},
 #endif
@@ -58,7 +62,9 @@ resources[] = {
  {'t', RLIMIT_CPU,         "cpu time",             "seconds", 0},
  {'u', RLIMIT_NPROC,       "max user processes",   "",        0},
  {'v', RLIMIT_AS,          "virtual memory",       "kbytes", 10},
+#ifdef RLIMIT_LOCKS
  {'x', RLIMIT_LOCKS,       "file locks",           "",        0},
+#endif
 };
 
 static void ulimitFunc(const iocshArgBuf *args)
