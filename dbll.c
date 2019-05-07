@@ -19,24 +19,23 @@ long dbll(const char* match)
 {
     DBENTRY dbEntry;
     long status = 0;
-    size_t l = 0;
-    char *d = NULL;
+    char *matchfield = NULL;
     char *alt_match = NULL;
+    const char* symbol;
+    const char* target;
 
     if (match)
     {
-        l = strlen(match);
-        d = strchr(match, '.');
-        
-        if (!d)
+        matchfield = strchr(match, '.');
+        if (!matchfield)
         {
-            alt_match = malloc(l+3);
+            alt_match = malloc(strlen(match)+3);
             sprintf(alt_match, "%s.*", match);
         }
-        else if (strcmp(d, ".VAL") == 0 || strcmp(d, ".*") == 0)
+        else if (strcmp(matchfield, ".VAL") == 0 || strcmp(matchfield, ".*") == 0)
         {
-            alt_match = malloc(d-match+1);
-            sprintf(alt_match, "%.*s", (int)(d-match), match);
+            alt_match = malloc(matchfield-match+1);
+            sprintf(alt_match, "%.*s", (int)(matchfield-match), match);
         }
     }
 
@@ -44,22 +43,44 @@ long dbll(const char* match)
     for (status = dbFirstRecordType(&dbEntry); !status; status = dbNextRecordType(&dbEntry))
     for (status = dbFirstRecord(&dbEntry); !status; status = dbNextRecord(&dbEntry))
     {
-#if EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION >= 31411
+        #ifdef DBRN_FLAGS_ISALIAS
         if (dbIsAlias(&dbEntry)) continue;
-#endif
+        #endif
         for (status = dbFirstField(&dbEntry, 0); !status; status = dbNextField(&dbEntry, 0))
         {
-            if (dbGetLinkType(&dbEntry) == DCT_LINK_PV)
+            switch (dbEntry.pflddes->field_type)
             {
-                const char* target = ((DBLINK *)dbEntry.pfield)->value.pv_link.pvname;
-                if (!match || (
-                        (strchr(target, '.') ? 1 : 0) == (d ? 1 : 0) ?
-                            epicsStrGlobMatch(target, match) : 
-                            alt_match ? epicsStrGlobMatch(target, alt_match) : 0))
-                {
-                    printf("%s.%s ==> %s\n", dbGetRecordName(&dbEntry), dbGetFieldName(&dbEntry),
-                        dbGetString(&dbEntry));
-                }
+                default:
+                    continue;
+                case DBF_INLINK:
+                    symbol = "<--";
+                    break;
+                case DBF_OUTLINK:
+                    symbol = "-->";
+                    break;
+                case DBF_FWDLINK:
+                    symbol = "...";
+                    break;
+            }
+            switch (((DBLINK *)dbEntry.pfield)->type)
+            {
+                default:
+                    continue;
+                #ifdef PN_LINK
+                case PN_LINK:
+                #endif
+                case PV_LINK:
+                case DB_LINK:
+                case CA_LINK:
+                    break;
+            }
+            target = ((DBLINK *)dbEntry.pfield)->value.pv_link.pvname;
+            if (!target) continue;
+            if (!match || (!strchr(target, '.') == !matchfield ? epicsStrGlobMatch(target, match)
+                : alt_match ? epicsStrGlobMatch(target, alt_match) : 0))
+            {
+                printf("%s.%s %s %s\n", dbGetRecordName(&dbEntry), dbGetFieldName(&dbEntry),
+                    symbol, dbGetString(&dbEntry));
             }
         }
     }
