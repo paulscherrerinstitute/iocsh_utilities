@@ -28,13 +28,13 @@ extern DBBASE *pdbbase;
 int addScan (char* ratestr)
 {
     dbMenu  *menuScan;
-    int     l, i, j, nChoice;   
-    char    **papChoiceName;      
+    int     l, i, j, nChoice;
+    char    **papChoiceName;
     char    **papChoiceValue;
     double  rate, r;
     char    dummy;
     char    *name;
-    
+
     if (interruptAccept)
     {
         fprintf(stderr, "addScan: Can add a scan period only before iocInit!\n");
@@ -44,7 +44,7 @@ int addScan (char* ratestr)
     {
         fprintf(stderr, "addScan: Argument '%s' must be a number > 0\n", ratestr);
         return -1;
-    }    
+    }
     menuScan = dbFindMenu(pdbbase,"menuScan");
     nChoice = menuScan->nChoice;
     for (i=SCAN_1ST_PERIODIC; i < nChoice; i++)
@@ -100,7 +100,46 @@ int addScan (char* ratestr)
         }
     }
 #endif
-    return 0;    
+    return 0;
+}
+
+int rmScan (char* ratestr)
+{
+    dbMenu  *menuScan;
+    int     i, nChoice;
+    double  rate, r;
+    char    dummy;
+
+    if (interruptAccept)
+    {
+        fprintf(stderr, "rmScan: Can remove a scan period only before iocInit!\n");
+        return -1;
+    }
+    if (!ratestr || sscanf (ratestr, "%lf%c", &rate, &dummy) != 1 || rate <= 0)
+    {
+        fprintf(stderr, "rmScan: Argument '%s' must be a number > 0\n", ratestr);
+        return -1;
+    }
+    menuScan = dbFindMenu(pdbbase,"menuScan");
+    nChoice = menuScan->nChoice;
+    for (i=SCAN_1ST_PERIODIC; i < nChoice; i++)
+    {
+        r = strtod(menuScan->papChoiceValue[i], NULL);
+        if (r == rate)
+        {
+            free(menuScan->papChoiceName[i]);
+            free(menuScan->papChoiceValue[i]);
+            while (++i < nChoice)
+            {
+                menuScan->papChoiceName[i-1] = menuScan->papChoiceName[i];
+                menuScan->papChoiceValue[i-1] = menuScan->papChoiceValue[i];
+            }
+            menuScan->nChoice = nChoice-1;
+            return 0;
+        }
+    }
+    fprintf(stderr, "rmScan: rate %s does not exist\n", ratestr);
+    return 0;
 }
 
 #ifndef EPICS_3_13
@@ -111,10 +150,18 @@ static void addScanFunc (const iocshArgBuf *args)
 {
     addScan(args[0].sval);
 }
+
+static const iocshArg rmScanArg0 = { "rate", iocshArgString };
+static const iocshArg * const rmScanArgs[1] = { &rmScanArg0 };
+static const iocshFuncDef rmScanDef = { "rmScan", 1, rmScanArgs };
+static void rmScanFunc (const iocshArgBuf *args)
+{
+    rmScan(args[0].sval);
+}
 static void addScanRegister(void)
 {
     iocshRegister (&addScanDef, addScanFunc);
+    iocshRegister (&rmScanDef, rmScanFunc);
 }
 epicsExportRegistrar(addScanRegister);
 #endif
-
