@@ -52,7 +52,7 @@ static const iocshFuncDef exclDef = { "!", 2, execArgs }; /* alias */
 
 static void execFunc (const iocshArgBuf *args)
 {
-    char commandline [256];
+    char commandline[1024];
     int i;
     int status;
     size_t len;
