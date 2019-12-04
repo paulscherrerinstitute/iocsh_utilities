@@ -255,7 +255,7 @@ int epicsThreadSetAffinity(epicsThreadId id, cpu_set_t* cpuset)
 
     if (id) tid = epicsThreadGetPosixThreadId(id);
     else tid = pthread_self();
-    if (tid) status = pthread_setaffinity_np(tid, sizeof(cpuset), cpuset);
+    if (tid) status = pthread_setaffinity_np(tid, sizeof(cpu_set_t), cpuset);
     switch (status)
     {
         case 0:

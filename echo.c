@@ -2,6 +2,10 @@
 #include "epicsVersion.h"
 #ifdef BASE_VERSION
 #define EPICS_3_13
+#else
+#include "iocsh.h"
+#include "epicsStdioRedirect.h"
+#include "epicsExport.h"
 #endif
 
 #include "epicsString.h"
@@ -18,10 +22,6 @@ int echo(char* str)
 }
 
 #ifndef EPICS_3_13
-#include "iocsh.h"
-#include "epicsStdioRedirect.h"
-#include "epicsExport.h"
-
 static const iocshArg echoArg0 = { "string", iocshArgString };
 static const iocshArg * const echoArgs[1] = { &echoArg0 };
 static const iocshFuncDef echoDef = { "echo", 1, echoArgs };

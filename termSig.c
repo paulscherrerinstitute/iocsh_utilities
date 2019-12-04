@@ -10,12 +10,29 @@ int termSigDebug = 0;
 epicsExportAddress(int, termSigDebug);
 
 #ifndef vxWorks
+struct sigaction old_handler_SIGHUP;
+struct sigaction old_handler_SIGINT;
+struct sigaction old_handler_SIGPIPE;
+struct sigaction old_handler_SIGALRM;
+struct sigaction old_handler_SIGTERM;
+struct sigaction old_handler_SIGUSR1;
+struct sigaction old_handler_SIGUSR2;
+
 void termSigHandler(int sig, siginfo_t* info , void* ctx)
 {
     /* try to clean up before exit */
     if (termSigDebug)
         errlogPrintf("\nSignal %s (%d)\n", strsignal(sig), sig);
-    signal(sig, SIG_DFL);
+
+    /* restore original handlers */
+    sigaction(SIGHUP,  &old_handler_SIGHUP,  NULL);
+    sigaction(SIGINT,  &old_handler_SIGINT,  NULL);
+    sigaction(SIGPIPE, &old_handler_SIGPIPE, NULL);
+    sigaction(SIGALRM, &old_handler_SIGALRM, NULL);
+    sigaction(SIGTERM, &old_handler_SIGTERM, NULL);
+    sigaction(SIGUSR1, &old_handler_SIGUSR1, NULL);
+    sigaction(SIGUSR2, &old_handler_SIGUSR2, NULL);
+
     epicsExitCallAtExits(); /* will only start executing handlers once */
     /* send the same signal again */
     raise(sig);
@@ -37,13 +54,13 @@ static void termSigRegistrar (void)
     sa.sa_sigaction = termSigHandler;
     sa.sa_flags = SA_SIGINFO;
 
-    sigaction(SIGHUP,  &sa, NULL);
-    sigaction(SIGINT,  &sa, NULL);
-    sigaction(SIGPIPE, &sa, NULL);
-    sigaction(SIGALRM, &sa, NULL);
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGUSR1, &sa, NULL);
-    sigaction(SIGUSR2, &sa, NULL);
+    sigaction(SIGHUP,  &sa, &old_handler_SIGHUP);
+    sigaction(SIGINT,  &sa, &old_handler_SIGINT);
+    sigaction(SIGPIPE, &sa, &old_handler_SIGPIPE);
+    sigaction(SIGALRM, &sa, &old_handler_SIGALRM);
+    sigaction(SIGTERM, &sa, &old_handler_SIGTERM);
+    sigaction(SIGUSR1, &sa, &old_handler_SIGUSR1);
+    sigaction(SIGUSR2, &sa, &old_handler_SIGUSR2);
 #endif
     epicsAtExit(termSigExitFunc, NULL);
 }
