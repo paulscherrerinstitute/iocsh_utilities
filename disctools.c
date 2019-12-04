@@ -26,9 +26,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/sysmacros.h>
+#include <sys/types.h>
 #include <time.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
 #include <glob.h>
@@ -42,7 +42,7 @@
 #ifdef UNIX
 
 /* dir, ll, ls */
-static const iocshArg * const dirArgs[1] = { 
+static const iocshArg * const dirArgs[1] = {
     &(iocshArg){ "files/direcories", iocshArgArgv }
 };
 static const iocshFuncDef dirDef = { "dir", 1, dirArgs };
