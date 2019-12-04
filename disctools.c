@@ -1,7 +1,21 @@
-/*
-* disctools - dir etc.
+/* disctools.c
 *
-* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
+*  provide several file system functions in the ioc shell
+*
+* Copyright (C) 2011 Dirk Zimoch
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #define _FILE_OFFSET_BITS 64
@@ -12,9 +26,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/sysmacros.h>
+#include <sys/types.h>
 #include <time.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
 #include <glob.h>
@@ -28,7 +42,7 @@
 #ifdef UNIX
 
 /* dir, ll, ls */
-static const iocshArg * const dirArgs[1] = { 
+static const iocshArg * const dirArgs[1] = {
     &(iocshArg){ "files/direcories", iocshArgArgv }
 };
 static const iocshFuncDef dirDef = { "dir", 1, dirArgs };
@@ -129,7 +143,7 @@ static void dirFunc(const iocshArgBuf *args)
     int longformat = 1;
     int rows, cols, r, c;
     int width = 80;
-    
+
     if (strcmp(args[0].aval.av[0], "ls") == 0)
     {
         struct winsize w;
@@ -209,7 +223,7 @@ static void dirFunc(const iocshArgBuf *args)
         int n;
         int j;
         maxlen = 0;
-        
+
         filename = globinfo.gl_pathv[i];
         if (filename[0] == '/')
             while (filename[1] == '/')
@@ -218,7 +232,7 @@ static void dirFunc(const iocshArgBuf *args)
         if (filename[len] != '/')
             continue;
         if (len == 0) len++;
-        
+
         n = scandir(filename, &namelist, nohidden,
     #ifdef _GNU_SOURCE
             versionsort

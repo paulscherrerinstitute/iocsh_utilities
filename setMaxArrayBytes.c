@@ -1,3 +1,23 @@
+/* setMaxArrayBytes.c
+*
+*  automatically find out how much EPICS_CA_MAX_ARRAY_BYTES is needed
+*
+* Copyright (C) 2017 Dirk Zimoch
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <stdlib.h>
 
 #define DBFLDTYPES_GBLSOURCE
@@ -25,7 +45,7 @@ static void setMaxArrayBytes(initHookState initState)
     long status, size, maxNeeded = 0, maxBytes = 0;
 
     if (initState != initHookAfterFinishDevSup) return;
-    
+
     if (setMaxArrayBytesDebug)
         fprintf(stderr, "reading array sizes\n");
 
@@ -43,7 +63,7 @@ static void setMaxArrayBytes(initHookState initState)
             /* all array fields are DBF_NOACCESS and SPC_DBADDR */
             if (dbEntry.pflddes->field_type != DBF_NOACCESS) continue;
             if (dbEntry.pflddes->special != SPC_DBADDR) continue;
-        
+
             if (setMaxArrayBytesDebug)
                fprintf(stderr, "%s.%s\n", dbGetRecordTypeName(&dbEntry), dbGetFieldName(&dbEntry));
 
@@ -65,7 +85,7 @@ static void setMaxArrayBytes(initHookState initState)
                 prset->cvt_dbaddr(&addr);
                 size = caFieldSize(addr.field_type, addr.no_elements);
                 if (size > maxNeeded) maxNeeded = size;
-            
+
                 if (setMaxArrayBytesDebug)
                     fprintf(stderr, "%s.%s %s[%ld] %ld bytes\n", addr.precord->name, dbGetFieldName(&dbEntry),
                         pamapdbfType[addr.field_type].strvalue+4, addr.no_elements, size);
