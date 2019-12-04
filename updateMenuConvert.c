@@ -1,9 +1,21 @@
 /* updateMenuConvert.c
 *
-*  add all breakpoint tables found on this ioc
-*  to the menu convert (used by LINR field)
+*  add all breakpoint tables loaded to menu convert (used by LINR field)
 *
-* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
+* Copyright (C) 2005 Dirk Zimoch
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <string.h>
@@ -33,12 +45,12 @@ int updateMenuConvert ()
 {
     brkTable *pbrkTable;
     dbMenu   *menuConvert;
-    ELLLIST  missing;              
-    node     *pbtable;               
-    int      l, i, found, nChoice;   
-    char     **papChoiceName;      
-    char     **papChoiceValue;     
-    
+    ELLLIST  missing;
+    node     *pbtable;
+    int      l, i, found, nChoice;
+    char     **papChoiceName;
+    char     **papChoiceValue;
+
     if (interruptAccept)
     {
         fprintf(stderr, "updateMenuConvert: Can update menuConvert only before iocInit!\n");
@@ -74,7 +86,7 @@ int updateMenuConvert ()
     if (ellCount(&missing))
     {
         nChoice = menuConvert->nChoice + ellCount(&missing);
-        
+
         papChoiceName=dbCalloc(nChoice,sizeof(char*));
         papChoiceValue=dbCalloc(nChoice,sizeof(char*));
         for (i=0; i<menuConvert->nChoice; i++)

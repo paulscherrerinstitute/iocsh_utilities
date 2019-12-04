@@ -1,3 +1,22 @@
+/* dbla.c
+*
+*  overwrite the dbla command from EPICS base to allow reverse lookup
+*
+* Copyright (C) 2017 Dirk Zimoch
+*
+* The original dbla iocsh function is published under the EPICS Open License
+* which can be found here: https://epics.anl.gov/license/open.php
+* The original contained the following copyright notice:
+*/
+/*************************************************************************\
+* Copyright (c) 2009 UChicago Argonne LLC, as Operator of Argonne
+*     National Laboratory.
+* Copyright (c) 2002 The Regents of the University of California, as
+*     Operator of Los Alamos National Laboratory.
+* EPICS BASE is distributed subject to a Software License Agreement found
+* in file LICENSE that is included with this distribution.
+\*************************************************************************/
+
 #include "dbStaticLib.h"
 #include "epicsString.h"
 #include "epicsStdioRedirect.h"
@@ -31,7 +50,7 @@ long epicsShareAPI dbla(const char* match)
             printf("%s -> %s\n", alias, realname);
         }
     }
-    dbFinishEntry(&dbEntry);   
+    dbFinishEntry(&dbEntry);
 #endif
     return 0;
 }

@@ -1,7 +1,21 @@
-/*
-* ulimit - Set resource limits.
+/* ulimit.c
 *
-* DISCLAIMER: Use at your own risc and so on. No warranty, no refund.
+*  set resource limits from ioc shell
+*
+* Copyright (C) 2011 Dirk Zimoch
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #define _FILE_OFFSET_BITS 64
@@ -34,7 +48,7 @@ static void printLimit(rlim_t limit, unsigned int shift)
 {
     if (limit == RLIM_INFINITY)
         printf ("unlimited\n");
-    else 
+    else
         printf ("%" rlim_t_fmt "\n", limit>>shift);
 }
 
@@ -72,7 +86,7 @@ static void ulimitFunc(const iocshArgBuf *args)
         option = args[0].sval[1];
     else
         limit = args[0].sval;
-    
+
     if (option == 'a')
     {
         for (i = 0; i < NELEMENTS(resources); i++)

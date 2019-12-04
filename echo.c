@@ -1,3 +1,24 @@
+/* echo.c
+*
+*  echo a string on the ioc shell
+*
+* Copyright (C) 2018 Dirk Zimoch
+*
+* This is a back port for older EPICS base versions that do not provide this function.
+* The original echo iocsh function is published under the EPICS Open License
+* which can be found here: https://epics.anl.gov/license/open.php
+* The original contained the following copyright notice:
+*/
+/*************************************************************************\
+* Copyright (c) 2007 UChicago Argonne LLC, as Operator of Argonne
+*     National Laboratory.
+* Copyright (c) 2002 The University of Saskatchewan
+* Copyright (c) 2002 The Regents of the University of California, as
+*     Operator of Los Alamos National Laboratory.
+* EPICS BASE is distributed subject to a Software License Agreement found
+* in file LICENSE that is included with this distribution. 
+\*************************************************************************/
+
 #include <stdio.h>
 #include "epicsVersion.h"
 #ifdef BASE_VERSION
