@@ -27,6 +27,10 @@
 /* it is just crazy how much we would have to include to get this definition */
 extern DBBASE *pdbbase;
 
+#ifndef vxWorks
+#define dbla __dbla
+#endif
+
 long epicsShareAPI dbla(const char* match)
 {
 #if EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION >= 31411
@@ -54,12 +58,6 @@ long epicsShareAPI dbla(const char* match)
 #endif
     return 0;
 }
-
-/* Needed to overwrite existing dbla */
-#ifdef __GNUC__
-long __dbla(const char* match) __attribute__ ((alias ("dbla")));
-#define dbla __dbla
-#endif
 
 static const iocshFuncDef dblaDef =
     { "dbla", 1, (const iocshArg *[]) {
