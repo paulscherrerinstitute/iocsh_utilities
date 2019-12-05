@@ -36,16 +36,16 @@ struct dbFldDes{
     char *prompt;
     char *name;
 };
+#include "server.h"
 #else
 #include "osiSock.h"
 #include "dbBase.h"
 #include "dbCommon.h"
 #include "iocsh.h"
 #include "epicsStdioRedirect.h"
+#include "server.h"
 #include "epicsExport.h"
 #endif
-
-#include "server.h"
 
 #if EPICS_VERSION*10000+EPICS_REVISION*100+EPICS_MODIFICATION < 31412
 #define chanListLock addrqLock
@@ -65,6 +65,7 @@ epicsExportAddress(int, calDebug);
 
 long cal(const char* match)
 {
+#ifndef _WIN32
     struct client *client;
     int matchfield;
     char fullname[PVNAME_STRINGSZ+5];
@@ -112,6 +113,7 @@ long cal(const char* match)
         epicsMutexUnlock(client->chanListLock);
     }
     UNLOCK_CLIENTQ
+#endif
     return 0;
 }
 
