@@ -47,7 +47,17 @@ void epicsEnvUnset (const char *name)
 void epicsEnvUnset (const char *name)
 {
     if (!name) return;
+#ifdef _WIN32
+    /* simulate unset by setting a empty value */
+    char *cp = malloc(strlen(name) + 2);
+    strcpy(cp, name);
+    strcat(cp, "=");
+    if (putenv(cp) < 0)
+        fprintf(stderr, "Failed to unset environment parameter \"%s\"", name);
+    free(cp);
+#else
     unsetenv(name);
+#endif
 }
 #endif
 
