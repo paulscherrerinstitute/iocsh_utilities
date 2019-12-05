@@ -23,12 +23,12 @@
 #include "epicsStdio.h"
 #include "epicsStdioRedirect.h"
 #include "dbStaticLib.h"
+#include "dbAccess.h"
 #include "epicsString.h"
 #include "iocsh.h"
 #include "epicsExport.h"
 
 /* it is just crazy how much we would have to include to get this definition */
-extern DBBASE *pdbbase;
 
 long dbNextMatchingInfo(DBENTRY *pdbentry, const char* patternlist[])
 {

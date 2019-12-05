@@ -31,7 +31,6 @@
 #include "epicsStdioRedirect.h"
 #include "epicsExport.h"
 
-extern DBBASE *pdbbase;
 int setMaxArrayBytesDebug;
 epicsExportAddress(int, setMaxArrayBytesDebug);
 extern long caFieldSize(int type, long nelem);
