@@ -22,10 +22,8 @@
 #include "epicsStdioRedirect.h"
 #include "iocsh.h"
 #include "epicsVersion.h"
+#include "dbAccess.h"
 #include "epicsExport.h"
-
-/* it is just crazy how much we would have to include to get this definition */
-extern DBBASE *pdbbase;
 
 #ifndef vxWorks
 #define dbla __dbla

@@ -25,10 +25,8 @@
 #include "dbStaticLib.h"
 #include "epicsString.h"
 #include "iocsh.h"
+#include "dbAccess.h"
 #include "epicsExport.h"
-
-/* it is just crazy how much we would have to include to get this definition */
-extern DBBASE *pdbbase;
 
 long dbNextMatchingInfo(DBENTRY *pdbentry, const char* patternlist[])
 {
