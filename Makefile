@@ -62,4 +62,7 @@ DBDS_3.14    += dbla.dbd
 SOURCES_3.14 += threads.c
 DBDS_3.14 += threads.dbd
 
+SOURCES_3.14 += eval.c
+DBDS_3.14    += eval.dbd
+
 SOURCES_vxWorks += bootNotify.c

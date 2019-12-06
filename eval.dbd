@@ -1,0 +1,2 @@
+registrar(evalRegister)
+variable(evalDebug, int)
