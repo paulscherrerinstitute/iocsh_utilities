@@ -63,7 +63,7 @@ resources[] = {
 #ifdef RLIMIT_SIGPENDING
  {'i', RLIMIT_SIGPENDING,  "pending signals",      "",        0},
 #endif
- {'l', RLIMIT_MEMLOCK,     "max memory size",      "kbytes", 10},
+ {'l', RLIMIT_MEMLOCK,     "max locked memory",    "kbytes", 10},
  {'m', RLIMIT_RSS,         "max memory size",      "kbytes", 10},
  {'n', RLIMIT_NOFILE,      "open files",           "",        0},
 #ifdef RLIMIT_MSGQUEUE

@@ -47,7 +47,7 @@ void epicsEnvUnset (const char *name)
 void epicsEnvUnset (const char *name)
 {
     if (!name) return;
-    unsetenv(name);
+    putenv((char*)name);
 }
 #endif
 
