@@ -26,9 +26,8 @@
 #include "dbAccess.h"
 #include "epicsString.h"
 #include "iocsh.h"
+#include "dbAccess.h"
 #include "epicsExport.h"
-
-/* it is just crazy how much we would have to include to get this definition */
 
 long dbNextMatchingInfo(DBENTRY *pdbentry, const char* patternlist[])
 {

@@ -184,7 +184,7 @@ long dbll(const char* match, const char* types)
             }
         }
     }
-    dbFinishEntry(&dbEntry);   
+    dbFinishEntry(&dbEntry);
     free(alt_match);
     return 0;
 }

@@ -100,7 +100,7 @@ static void execFunc (const iocshArgBuf *args)
     {
         fprintf(stderr, "system(%s) failed: %s\n", commandline, strerror(errno));
         return;
-    }    
+    }
     if (WIFSIGNALED(status))
     {
 #ifdef __USE_GNU
@@ -177,12 +177,12 @@ char* expand(const char* src)
     static char *expanded;
 
     if (!src || !*src) return (char*)src;
-    
+
     if (!strchr(src, '$'))
     {
         return (char*)src;
     }
-    
+
     if (macCreateHandle(&mac,(
     #if (EPICSVER>=31501)
         const
@@ -207,7 +207,7 @@ char* expand(const char* src)
                 *eq = 0;
                 macPutValue(mac, var, eq+1);
             }
-            free(var);            
+            free(var);
         }
     }
     #endif
