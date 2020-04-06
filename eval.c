@@ -32,7 +32,7 @@
 #include "epicsString.h"
 #include "epicsExport.h"
 
-int evalDebug = 1;
+int evalDebug = 0;
 epicsExportAddress(int, evalDebug);
 
 static void evalFunc (const iocshArgBuf *args)
@@ -56,22 +56,20 @@ static void evalFunc (const iocshArgBuf *args)
             fprintf(stderr, "command line too long\n");
             return;
         }
-        *p++ = '\'';
-        p += epicsStrSnPrintEscaped(p, sizeof(commandline)-(p-commandline)-3, arg, len);
-        *p++ = '\'';
-        *p++ = ' ';
-        //p += sprintf(p, " \"%.*s\"", (int)len, arg);
+        p += sprintf(p, " \"%s\"", arg);
     }
     *p = 0;
     bufferfile = open_memstream(&buffer, &buffersize);
     orig_stdout = epicsGetThreadStdout();
-    epicsSetThreadStdout(bufferfile);
     if (evalDebug) fprintf(stderr, "iocshCmd:(%s)\n", commandline);
+    epicsSetThreadStdout(bufferfile);
     iocshCmd(commandline);
+    epicsSetThreadStdout(orig_stdout);
     fclose(bufferfile);
     while (isspace(buffer[buffersize-1])) buffer[--buffersize] = 0;
-    if (evalDebug) { fprintf(stderr, "result:"); epicsStrPrintEscaped(stderr, buffer, buffersize); fprintf(stderr, "\n");}
-    epicsSetThreadStdout(orig_stdout);
+    if (evalDebug) {
+        fprintf(stderr, "result: %s\n", buffer);
+    }
     iocshCmd(buffer);
     free(buffer);
 }
@@ -83,7 +81,8 @@ static const iocshFuncDef evalDef = { "eval", 2, evalArgs };
 
 static void evalRegister(void)
 {
-    if (evalDebug) fprintf(stderr, "registering 'eval' command\n");
+    if (evalDebug)
+        fprintf(stderr, "registering 'eval' command\n");
     iocshRegister (&evalDef, evalFunc);
 }
 epicsExportRegistrar(evalRegister);
