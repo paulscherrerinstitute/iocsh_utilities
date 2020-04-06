@@ -18,7 +18,6 @@
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifdef __linux__
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -37,6 +36,7 @@ epicsExportAddress(int, evalDebug);
 
 static void evalFunc (const iocshArgBuf *args)
 {
+#ifdef __linux__
     char commandline[1024];
     char* p = commandline;
     unsigned int i;
@@ -72,6 +72,9 @@ static void evalFunc (const iocshArgBuf *args)
     }
     iocshCmd(buffer);
     free(buffer);
+#else
+    fprintf(stderr, "not implemented\n");
+#endif
 }
 
 static const iocshArg evalArg0 = { "command", iocshArgString };
@@ -86,4 +89,3 @@ static void evalRegister(void)
     iocshRegister (&evalDef, evalFunc);
 }
 epicsExportRegistrar(evalRegister);
-#endif
