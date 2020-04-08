@@ -23,9 +23,11 @@
 #define EPICS_3_13
 #else
 #include "iocsh.h"
-#include "epicsExport.h"
 #include "epicsStdioRedirect.h"
+#include "epicsExport.h"
 #endif
+
+#include "epicsEnvUnset.h"
 
 #ifdef vxWorks
 /* Do the next best thing: invalidate the variable name */
