@@ -40,7 +40,8 @@ extern DBBASE *pdbbase;
 int addScan (char* ratestr)
 {
     dbMenu  *menuScan;
-    int     l, i, j, nChoice;
+    size_t  l;
+    int     i, j, nChoice;
     char    **papChoiceName;
     char    **papChoiceValue;
     double  rate, r;
@@ -71,7 +72,7 @@ int addScan (char* ratestr)
     }
     papChoiceName=dbCalloc(nChoice+1,sizeof(char*));
     papChoiceValue=dbCalloc(nChoice+1,sizeof(char*));
-    for (j=0; j < i; j++)
+    for (j = 0; j < i; j++)
     {
         papChoiceName[j] = menuScan->papChoiceName[j];
         papChoiceValue[j] = menuScan->papChoiceValue[j];
@@ -82,7 +83,7 @@ int addScan (char* ratestr)
     papChoiceValue[i] = dbCalloc(l+16,1);
     strcpy(papChoiceValue[i], name);
     strcpy(papChoiceValue[i]+l, " second");
-    for (j=i; j < nChoice; j++)
+    for (j = i; j < nChoice; j++)
     {
         papChoiceName[j+1] = menuScan->papChoiceName[j];
         papChoiceValue[j+1] = menuScan->papChoiceValue[j];

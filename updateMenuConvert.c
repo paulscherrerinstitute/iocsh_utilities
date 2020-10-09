@@ -47,7 +47,8 @@ int updateMenuConvert ()
     dbMenu   *menuConvert;
     ELLLIST  missing;
     node     *pbtable;
-    int      l, i, found, nChoice;
+    size_t   l;
+    int      i, found, nChoice;
     char     **papChoiceName;
     char     **papChoiceValue;
 
@@ -62,19 +63,19 @@ int updateMenuConvert ()
         pbrkTable;
         pbrkTable = (brkTable *)ellNext(&pbrkTable->node))
     {
-        found=0;
-        for(i=0; i<menuConvert->nChoice; i++)
+        found = 0;
+        for(i = 0; i<menuConvert->nChoice; i++)
         {
-            if (strcmp(menuConvert->papChoiceValue[i],pbrkTable->name)==0)
+            if (strcmp(menuConvert->papChoiceValue[i],pbrkTable->name) == 0)
             {
-                found=1;
+                found = 1;
                 break;
             }
         }
         if (!found)
         {
             pbtable = dbCalloc(1,sizeof(struct node));
-            l=strlen(pbrkTable->name);
+            l = strlen(pbrkTable->name);
             pbtable->name = dbCalloc(l+12,1);
             pbtable->value = dbCalloc(l+1,1);
             strcpy(pbtable->name, "menuConvert");
@@ -87,14 +88,14 @@ int updateMenuConvert ()
     {
         nChoice = menuConvert->nChoice + ellCount(&missing);
 
-        papChoiceName=dbCalloc(nChoice,sizeof(char*));
-        papChoiceValue=dbCalloc(nChoice,sizeof(char*));
-        for (i=0; i<menuConvert->nChoice; i++)
+        papChoiceName = dbCalloc(nChoice,sizeof(char*));
+        papChoiceValue = dbCalloc(nChoice,sizeof(char*));
+        for (i = 0; i < menuConvert->nChoice; i++)
         {
             papChoiceName[i] = menuConvert->papChoiceName[i];
             papChoiceValue[i] = menuConvert->papChoiceValue[i];
         }
-        for (; i<nChoice; i++)
+        for (; i < nChoice; i++)
         {
             pbtable = (node*)ellFirst(&missing);
             printf("Adding breakpoint table \"%s\" to menuConvert.\n", pbtable->value);
@@ -104,8 +105,8 @@ int updateMenuConvert ()
         }
         free(menuConvert->papChoiceName);
         free(menuConvert->papChoiceValue);
-        menuConvert->papChoiceName=papChoiceName;
-        menuConvert->papChoiceValue=papChoiceValue;
+        menuConvert->papChoiceName = papChoiceName;
+        menuConvert->papChoiceValue = papChoiceValue;
         menuConvert->nChoice = nChoice;
     }
     else
