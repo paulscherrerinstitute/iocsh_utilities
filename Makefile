@@ -30,6 +30,9 @@ DBDS_3.14    += disctools.dbd
 SOURCES      += exec.c
 DBDS_3.14    += exec.dbd
 
+SOURCES      += ifEnvSet.c
+DBDS_3.14    += ifEnvSet.dbd
+
 SOURCES_3.14 += mlock.c
 DBDS_3.14    += mlock.dbd
 
