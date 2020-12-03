@@ -87,7 +87,7 @@ int ifEnvSet(const char* arg, const char* condition, const char *variable, const
         printf ("Operator ! negates the result\n");
         printf ("Operators < = > (or combinations) compare with numerical argument\n");
         printf ("Operator ~ matches against the argument glob pattern\n");
-        printf ("No operator means to check for string equality with argument\n");
+        printf ("No operator means to check for equality with argument\n");
 #ifdef vxWorks
         printf ("Returns 1 (true) or 0 (false) even if no variable is given\n");
 #endif
@@ -134,7 +134,7 @@ cont:
     if (*condition && *e == 0 &&
         (num_arg = strtol(arg, &e, 0), *e == 0)) {
         if (ifEnvSetDebug) printf("<num branch NUMBER=%ld ", num_arg);
-        /* argument is a number */
+        /* arguments are numbers */
         if (!(op & (EQUAL|LESS|GREATER))) {
             /* No op means = */
             op |= EQUAL;
@@ -153,7 +153,7 @@ cont:
         }
         if (ifEnvSetDebug) printf("%ld> ", num_condition);
     } else {
-        /* argument is not a number */
+        /* arguments are not numbers but strings */
         if (ifEnvSetDebug) printf("<string branch STRING='%s'> ", condition);
         if (op & (GREATER | LESS)) {
             fprintf(stderr, "ifEnvSet: < and > require numeric arguments\n");
