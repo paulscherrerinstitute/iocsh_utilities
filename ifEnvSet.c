@@ -124,15 +124,15 @@ int ifEnvSet(const char* arg, const char* condition, const char *variable, const
         condition++;
     } while (1);
 cont:
-    if (ifEnvSetDebug) printf ("CONDITION: '%s'", condition);
+    if (ifEnvSetDebug) printf ("CONDITION: '%s' ", condition);
     if (op & MATCH) {
         if (ifEnvSetDebug) printf("<match branch MATCH='%s'> ", condition);
         result |= match(arg, condition);
     }
     num_condition = strtol(condition, &e, 0);
     if (ifEnvSetDebug) printf("parsed %ld ", num_condition);
-    if (*condition && *e == 0) {
-        num_arg = strtol(arg, NULL, 0);
+    if (*condition && *e == 0 &&
+        (num_arg = strtol(arg, &e, 0), *e == 0)) {
         if (ifEnvSetDebug) printf("<num branch NUMBER=%ld ", num_arg);
         /* argument is a number */
         if (!(op & (EQUAL|LESS|GREATER))) {
@@ -156,7 +156,7 @@ cont:
         /* argument is not a number */
         if (ifEnvSetDebug) printf("<string branch STRING='%s'> ", condition);
         if (op & (GREATER | LESS)) {
-            fprintf(stderr, "ifEnvSet: < and > require numeric argument\n");
+            fprintf(stderr, "ifEnvSet: < and > require numeric arguments\n");
             return 0;
         }
         /* must be string equal */
