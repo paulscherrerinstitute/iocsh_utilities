@@ -22,6 +22,8 @@
 #define EQUAL    8
 #define MATCH   16
 
+int ifEnvSetDebug;
+
 static int match(const char *str, const char *pattern)
 {
     const char *cp = NULL, *mp = NULL;
@@ -98,35 +100,61 @@ int ifEnvSet(const char* arg, const char* condition, const char *variable, const
         return 0;
     }
     while (*condition == '!') { op ^= NOT; condition++; }
-    if (*condition == '~') { op |= MATCH; condition++; }
+    if (ifEnvSetDebug && op& NOT) printf("NOT ");
+    if (*condition == '~') {
+        if (ifEnvSetDebug) printf("MATCH ");
+        op |= MATCH; condition++;
+    }
     else do {
         switch (*condition) {
-            case '>': op |= GREATER; break;
-            case '<': op |= LESS; break;
-            case '=': op |= EQUAL; break;
+            case '>':
+                op |= GREATER;
+                if (ifEnvSetDebug) printf("GREATER ");
+                break;
+            case '<':
+                op |= LESS;
+                if (ifEnvSetDebug) printf("LESS ");
+                break;
+            case '=':
+                op |= EQUAL;
+                if (ifEnvSetDebug) printf("EQUAL ");
+                break;
             default: goto cont;
         }
         condition++;
     } while (1);
 cont:
+    if (ifEnvSetDebug) printf ("CONDITION: '%s'", condition);
     if (op & MATCH) {
+        if (ifEnvSetDebug) printf("<match branch MATCH='%s'> ", condition);
         result |= match(arg, condition);
     }
     num_condition = strtol(condition, &e, 0);
-    if (*condition || *e == 0) {
+    if (ifEnvSetDebug) printf("parsed %ld ", num_condition);
+    if (*condition && *e == 0) {
         num_arg = strtol(arg, NULL, 0);
+        if (ifEnvSetDebug) printf("<num branch NUMBER=%ld ", num_arg);
         /* argument is a number */
+        if (!(op & (EQUAL|LESS|GREATER))) {
+            /* No op means = */
+            op |= EQUAL;
+        }
         if (op & EQUAL) {
+            if (ifEnvSetDebug) printf("EQUAL ");
             result |= (num_arg == num_condition);
         }
         if (op & LESS) {
+            if (ifEnvSetDebug) printf("LESS ");
             result |= (num_arg < num_condition);
         }
         if (op & GREATER) {
+            if (ifEnvSetDebug) printf("GREATER ");
             result |= (num_arg > num_condition);
         }
+        if (ifEnvSetDebug) printf("%ld> ", num_condition);
     } else {
         /* argument is not a number */
+        if (ifEnvSetDebug) printf("<string branch STRING='%s'> ", condition);
         if (op & (GREATER | LESS)) {
             fprintf(stderr, "ifEnvSet: < and > require numeric argument\n");
             return 0;
@@ -137,18 +165,22 @@ cont:
     if (op & NOT) {
         result = !result;
     }
+    if (ifEnvSetDebug) printf("= %s\n", result ? "TRUE" : "FALSE");
     if (!result) value = elsevalue;
     if (variable && value) {
         epicsEnvSet(variable, value);
-        printf("%s=%s\n", variable, value);
+        printf("%s='%s'\n", variable, value);
     } else if (result && variable && !value) {
         epicsEnvUnset(variable);
         printf("epicsEnvUnset %s\n", variable);
+    } else {
+        printf("%s\n", result ? "true" : "false");
     }
     return result;
 }
 
 #ifndef EPICS_3_13
+epicsExportAddress(int, ifEnvSetDebug);
 
 static const iocshArg iesArg0 = { "argument", iocshArgString };
 static const iocshArg iesArg1 = { "condition", iocshArgString };
