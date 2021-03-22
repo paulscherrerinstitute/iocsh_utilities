@@ -58,13 +58,15 @@ static void execFunc (const iocshArgBuf *args)
     char *p = commandline;
     char *arg;
     char special;
+    int in = fileno(epicsGetStdin());
+    int out = fileno(epicsGetStdout());
+    int err = fileno(epicsGetStderr());
 
     if (args[0].sval == NULL)
     {
         p = getenv("SHELL");
         if (!p) p = "/bin/sh";
-        strncpy(commandline, p, sizeof(commandline)-1);
-        status = system(commandline);
+        snprintf(commandline, sizeof(commandline), "%s <&%d >&%d 2>%d", p, in, out, err);
     }
     else
     {
@@ -93,9 +95,12 @@ static void execFunc (const iocshArgBuf *args)
             /* add unquoted special chars | ; & */
             if (special) p += sprintf(p, "%c", special);
         }
-        if (execDebug) fprintf(stderr, "system(%s)\n", commandline);
-        status = system(commandline);
+        if (in != 0) p += snprintf(p, sizeof(commandline) - (p - commandline), " <&%d", in);
+        if (out != 1) p += snprintf(p, sizeof(commandline) - (p - commandline), " >&%d", out);
+        if (err != 2) p += snprintf(p, sizeof(commandline) - (p - commandline), " 2>&%d", err);
     }
+    if (execDebug) fprintf(stderr, "system(%s)\n", commandline);
+    status = system(commandline);
     if (status == -1)
     {
         fprintf(stderr, "system(%s) failed: %s\n", commandline, strerror(errno));
