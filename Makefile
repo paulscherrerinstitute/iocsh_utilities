@@ -1,6 +1,6 @@
 include /ioc/tools/driver.makefile
 
-BUILDCLASSES += Linux
+BUILDCLASSES += vxWorks Linux WIN32
 
 # cannot build required 'utilities' for vxWorks 6.6
 EXCLUDE_ARCHS += V66
