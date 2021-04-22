@@ -31,6 +31,9 @@
 
 #include "epicsString.h"
 
+#ifndef vxWorks
+static
+#endif
 int echo(char* str)
 {
     if (str)
