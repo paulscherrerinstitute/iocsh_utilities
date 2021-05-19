@@ -22,16 +22,17 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "caProto.h"
 #include "epicsString.h"
 #include "epicsVersion.h"
-
 #ifdef BASE_VERSION
 #define EPICS_3_13
 int epicsStrGlobMatch(const char *str, const char *pattern);
 #define epicsMutexMustLock(lock) FASTLOCK(&lock)
 #define epicsMutexUnlock(lock)   FASTUNLOCK(&lock)
+#define CA_MAJOR_PROTOCOL_REVISION CA_PROTOCOL_VERSION
 #include <inetLib.h>
-#define ipAddrToDottedIP(addr, buffer, size) inet_ntoa_b((addr)->sin_addr, buffer)
+#define ipAddrToA(addr, buffer, size) inet_ntoa_b((addr)->sin_addr, buffer)
 struct dbFldDes{
     char *prompt;
     char *name;
@@ -63,7 +64,7 @@ int calDebug = 0;
 epicsExportAddress(int, calDebug);
 #endif
 
-long cal(const char* match)
+long cal(const char* match, int level)
 {
 #ifndef _WIN32
     struct client *client;
@@ -71,43 +72,71 @@ long cal(const char* match)
     char fullname[PVNAME_STRINGSZ+5];
     char clientref[100];
 
+    if (match && !*match) match= NULL;
     matchfield = match && strchr(match, '.');
 
     LOCK_CLIENTQ
     for (client = (struct client *)ellNext(&clientQ.node); client; client = (struct client *)ellNext(&client->node))
     {
         struct channel_in_use *pciu;
+        int n = 0;
         if (calDebug) fprintf(stderr, "host: %s\nuser: %s\n", client->pHostName, client->pUserName);
-        epicsMutexMustLock(client->chanListLock);
-        for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu; pciu = (struct channel_in_use *)ellNext(&pciu->node))
+        if (level >= 2) {
+            n = sprintf(clientref, "V%u.%u %s:",
+                CA_MAJOR_PROTOCOL_REVISION,
+                client->minor_version_number,
+                client->proto == IPPROTO_UDP ? "UDP" :
+                client->proto == IPPROTO_TCP ? "TCP" : "UKN");
+        }
+        n += sprintf(clientref + n, "%.36s@", client->pUserName ? client->pUserName : "?");
+        if (client->pHostName)
         {
-            int userlen;
+            sprintf(clientref + n, "%.*s:%i",
+                (int)strcspn(client->pHostName, "."),
+                client->pHostName, ntohs(client->addr.sin_port));
+        }
+        else
+        {
+            char clientHost[60];
+            ipAddrToA(&client->addr, clientref + n, sizeof(clientHost));
+            if (clientref[n] > '9')
+                sprintf(clientref + n + strcspn(clientref + n, "."), ":%i",
+                    ntohs(client->addr.sin_port));
+        }
+        if (calDebug) fprintf(stderr, "clientref: %s\n", clientref);
+        epicsMutexMustLock(client->chanListLock);
+        for (pciu = (struct channel_in_use *) ellFirst(&client->chanList); pciu;
+                                pciu = (struct channel_in_use *)ellNext(&pciu->node))
+        {
             const char* recname = getAddr(pciu).precord->name;
             if (calDebug) fprintf(stderr, "channel: %s\n", recname);
             if (!recname) continue;
             sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
             if (calDebug) fprintf(stderr, "fullname: %s\n", fullname);
-            userlen = client->pUserName ? sprintf(clientref, "%.36s@", client->pUserName) : 0;
-            if (client->pHostName)
-            {
-                sprintf(clientref + userlen, "%.*s:%i",
-                    (int)strcspn(client->pHostName, "."),
-                    client->pHostName, ntohs(client->addr.sin_port));
-            }
-            else
-            {
-                char clientIP[32];
-                ipAddrToDottedIP(&client->addr, clientIP, sizeof(clientIP));
-                if (calDebug) fprintf(stderr, "clientIP: %s\n", clientIP);
-                sprintf(clientref + userlen, "%s", clientIP);
-            }
-            if (calDebug) fprintf(stderr, "clientref: %s\n", clientref);
             if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match)
                 || (client->pUserName && epicsStrGlobMatch(client->pUserName, match))
                 || (client->pHostName && epicsStrGlobMatch(client->pHostName, match))
                 || epicsStrGlobMatch(clientref, match))
             {
-                printf("%s ==> %s\n", clientref, fullname);
+                printf("%s%s %s==> %s\n",
+#ifndef EPICS_3_13
+                    level < 3 ? "" :
+                        pciu->state == rsrvCS_invalid ? "[invalid]" :
+                        pciu->state == rsrvCS_pendConnectResp ? "[connect]" :
+                        pciu->state == rsrvCS_inService ? "[active]" :
+                        pciu->state == rsrvCS_pendConnectRespUpdatePendAR ? "[connectAR]" :
+                        pciu->state == rsrvCS_inServiceUpdatePendAR ? "[activeAR]" :
+                        pciu->state == rsrvCS_shutdown ? "[shutdown]" : "[unknown]",
+#else
+                    "",
+#endif
+                    clientref,
+                    level < 1 ? "" :
+                        asCheckPut(pciu->asClientPVT) ?
+                            pciu->asClientPVT->trapMask ? "w" : "w" :
+                        asCheckGet(pciu->asClientPVT) ? "r" : "n",
+                    fullname
+                );
             }
         }
         epicsMutexUnlock(client->chanListLock);
@@ -119,13 +148,14 @@ long cal(const char* match)
 
 #ifndef EPICS_3_13
 static const iocshFuncDef calDef =
-    { "cal", 1, (const iocshArg *[]) {
+    { "cal", 2, (const iocshArg *[]) {
     &(iocshArg) { "record name pattern", iocshArgString },
+    &(iocshArg) { "level", iocshArgInt },
 }};
 
 void calFunc(const iocshArgBuf *args)
 {
-    cal(args[0].sval);
+    cal(args[0].sval, args[1].ival);
 }
 
 static void calRegistrar(void)
