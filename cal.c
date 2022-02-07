@@ -97,8 +97,7 @@ long cal(const char* match, int level)
         }
         else
         {
-            char clientHost[60];
-            ipAddrToA(&client->addr, clientref + n, sizeof(clientHost));
+            ipAddrToA(&client->addr, clientref + n, sizeof(clientref) - n);
             if (clientref[n] > '9')
                 sprintf(clientref + n + strcspn(clientref + n, "."), ":%i",
                     ntohs(client->addr.sin_port));
