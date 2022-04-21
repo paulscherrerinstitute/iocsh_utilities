@@ -20,6 +20,8 @@
 \*************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "epicsVersion.h"
 #ifdef BASE_VERSION
 #define EPICS_3_13
@@ -34,12 +36,14 @@
 #ifndef vxWorks
 static
 #endif
-int echo(char* str)
+int echo(const char* str)
 {
     if (str)
     {
-        dbTranslateEscape(str, str);
-        fputs(str, stdout);
+        char* s = malloc(strlen(str)+1);
+        dbTranslateEscape(s, str);
+        fputs(s, stdout);
+        free(s);
     }
     putchar('\n');
     return 0;
