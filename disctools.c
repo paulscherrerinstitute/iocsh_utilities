@@ -66,7 +66,10 @@ void llOut(const char* dirname, const char* filename)
     char fullname[256];
     char type;
 
-    snprintf(fullname, sizeof(fullname), "%s%s", dirname ? dirname : "", filename);
+    if (dirname)
+        snprintf(fullname, sizeof(fullname), "%s/%s", dirname, filename);
+    else
+        snprintf(fullname, sizeof(fullname), "%s", filename);
     if (lstat(fullname, &filestat) == 0)
     {
         if (S_ISREG(filestat.st_mode)) type='-';
@@ -134,11 +137,19 @@ void llOut(const char* dirname, const char* filename)
     }
 }
 
+#ifndef GLOB_BRACE
+#define GLOB_BRACE 0
+#endif
+#ifndef GLOB_TILDE_CHECK
+#define GLOB_TILDE_CHECK 0
+#endif
+
 static void dirFunc(const iocshArgBuf *args)
 {
+    struct stat filestat;
     glob_t globinfo;
     const char* filename;
-    size_t i, n=0;
+    size_t i, numfiles=0, offs=0;
     int len, maxlen=0;
     int longformat = 1;
     int rows, cols, r, c;
@@ -166,15 +177,30 @@ static void dirFunc(const iocshArgBuf *args)
         int status;
         arg = args[0].aval.av[i];
         errno = 0;
+
+        /* a few problems with glob:
+            1. broken links matching wildcards are missing
+            2. trailing / does not only match directories
+        */
+        int dironly = arg[strlen(arg)-1] == '/';
         status = glob(arg, (i>1 ? GLOB_APPEND : 0)
-#ifdef GLOB_BRACE    
-        | GLOB_BRACE
-#endif
-#ifdef GLOB_TILDE_CHECK
-        | GLOB_TILDE_CHECK
-#endif
-        | (longformat ? GLOB_NOCHECK : 0)
-        | GLOB_MARK, NULL, &globinfo);
+            | (dironly ? GLOB_ONLYDIR : 0)
+            | GLOB_NOCHECK | GLOB_BRACE | GLOB_TILDE_CHECK,
+            NULL, &globinfo);
+        if (status == 0 && dironly)
+        {
+            /* if we are looking for dirs, remove all non-dirs */
+            int found=0;
+            while (offs < globinfo.gl_pathc)
+            {
+                len = strlen(globinfo.gl_pathv[offs])-1;
+                if (globinfo.gl_pathv[offs][len] != '/')
+                    globinfo.gl_pathv[offs][0] = 0;
+                else found=1;
+                offs++;
+            }
+            if (!found) status = GLOB_NOMATCH;
+        }
         if (status != 0)
         {
             if (status == GLOB_NOMATCH)
@@ -185,15 +211,20 @@ static void dirFunc(const iocshArgBuf *args)
     for (i = 0; i < globinfo.gl_pathc; i++)
     {
         filename = globinfo.gl_pathv[i];
-        len =  strlen(filename);
-        if (filename[len - 1] == '/')
+        if (filename[0] == 0) continue;
+
+        /* do directories later */
+        if (lstat(filename, &filestat) || S_ISDIR(filestat.st_mode))
             continue;
+
+        numfiles++;
         if (longformat)
         {
             llOut(NULL, filename);
+            globinfo.gl_pathv[i][0] = 0; /* mark as done */
             continue;
         }
-        n++;
+        len =  strlen(filename);
         if (len > maxlen) maxlen = len;
     }
     if (!longformat && maxlen)
@@ -204,15 +235,15 @@ static void dirFunc(const iocshArgBuf *args)
             cols = 1;
             maxlen = 0;
         }
-        rows = (n-1)/cols+1;
+        rows = (numfiles-1)/cols+1;
         for (r = 0; r < rows; r++)
         {
             for (c = 0; c < cols; c++)
             {
                 i = r + c*rows;
-                if (i >= n) continue;
-                printf("%-*s",
-                    maxlen, globinfo.gl_pathv[i]);
+                if (i >= numfiles) continue;
+                printf("%-*s", maxlen, globinfo.gl_pathv[i]);
+                globinfo.gl_pathv[i][0] = 0; /* mark as done */
             }
             printf("\n");
         }
@@ -220,34 +251,33 @@ static void dirFunc(const iocshArgBuf *args)
     for (i = 0; i < globinfo.gl_pathc; i++)
     {
         struct dirent** namelist;
-        int n;
+        int direntries;
         int j;
         maxlen = 0;
 
         filename = globinfo.gl_pathv[i];
-        if (filename[0] == '/')
-            while (filename[1] == '/')
-                filename++;
-        len =  strlen(filename) - 1;
-        if (filename[len] != '/')
+        if (filename[0] == 0) /* skip files marked before */
             continue;
-        if (len == 0) len++;
+        len =  strlen(filename);
 
-        n = scandir(filename, &namelist, nohidden,
+        if (globinfo.gl_pathc > 1)
+        {
+            if (numfiles > 0) printf("\n");
+            printf("%s:\n", filename);
+        }
+        direntries = scandir(filename, &namelist, nohidden,
     #ifdef _GNU_SOURCE
             versionsort
     #else
             alphasort
     #endif
         );
-        if (n < 0)
+        if (direntries < 0)
         {
             perror(filename);
             continue;
         }
-        if (globinfo.gl_pathc > 1)
-            printf("%.*s:\n", len, filename);
-        for (j = 0; j < n; j++)
+        for (j = 0; j < direntries; j++)
         {
             if (longformat)
             {
@@ -266,13 +296,13 @@ static void dirFunc(const iocshArgBuf *args)
                 cols = 1;
                 maxlen = 0;
             }
-            rows = (n-1)/cols+1;
+            rows = (direntries-1)/cols+1;
             for (r = 0; r < rows; r++)
             {
                 for (c = 0; c < cols; c++)
                 {
                     j = r + c*rows;
-                    if (j >= n) continue;
+                    if (j >= direntries) continue;
                     printf("%-*s",
                         maxlen, namelist[j]->d_name);
                     free(namelist[j]);
