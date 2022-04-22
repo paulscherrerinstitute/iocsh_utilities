@@ -66,7 +66,7 @@ void llOut(const char* dirname, const char* filename)
     char fullname[256];
     char type;
 
-    sprintf(fullname, "%s%s", dirname ? dirname : "", filename);
+    snprintf(fullname, sizeof(fullname), "%s%s", dirname ? dirname : "", filename);
     if (lstat(fullname, &filestat) == 0)
     {
         if (S_ISREG(filestat.st_mode)) type='-';
@@ -435,7 +435,7 @@ static void mvFunc(const iocshArgBuf *args)
     }
     if (!stat(newname, &filestat) && S_ISDIR(filestat.st_mode))
     {
-        sprintf(filename, "%s/%s", newname, oldname);
+        snprintf(filename, sizeof(filename), "%s/%s", newname, oldname);
         newname = filename;
     }
     if (rename(oldname, newname))

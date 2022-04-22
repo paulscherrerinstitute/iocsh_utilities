@@ -69,7 +69,8 @@ long cal(const char* match, int level)
 #ifndef _WIN32
     struct client *client;
     int matchfield;
-    char fullname[PVNAME_STRINGSZ+5];
+#define MAX_FIELD_NAME_LENGTH 10
+    char fullname[PVNAME_STRINGSZ+MAX_FIELD_NAME_LENGTH+1];
     char clientref[100];
 
     if (match && !*match) match= NULL;
@@ -110,7 +111,9 @@ long cal(const char* match, int level)
             const char* recname = getAddr(pciu).precord->name;
             if (calDebug) fprintf(stderr, "channel: %s\n", recname);
             if (!recname) continue;
-            sprintf(fullname, "%s.%s", recname, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
+            sprintf(fullname, "%.*s.%.*s",
+                PVNAME_STRINGSZ, recname,
+                MAX_FIELD_NAME_LENGTH, ((struct dbFldDes*)getAddr(pciu).pfldDes)->name);
             if (calDebug) fprintf(stderr, "fullname: %s\n", fullname);
             if (!match || epicsStrGlobMatch(matchfield ? fullname : recname, match)
                 || (client->pUserName && epicsStrGlobMatch(client->pUserName, match))

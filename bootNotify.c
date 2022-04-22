@@ -24,25 +24,22 @@
 #include "rsh.h"
 #include "epicsVersion.h"
 
-int bootNotify (char* script, char* script2)
+int bootNotify (const char* script, const char* script2)
 {
     char command[256];
     char epicsver[15];
     char* vxver = vxWorksVersion;
+    int n;
 
     if (script == NULL)
     {
         printErr("usage: bootNotify [\"<path>\",] \"<script>\"\n");
         return ERROR;
     }
+    n = sprintf(command, "%.*s", (int)sizeof(command)-1, script);
     if (script2)
-    {
-        sprintf(command, "%s/%s", script, script2);
-    }
-    else
-    {
-        sprintf(command, "%s", script);
-    }
+        n += sprintf(command+n, "/%.*s", (int)sizeof(command)-2-n, script2);
+
     /* strip off any leading non-numbers */
     while (vxver && (*vxver < '0' || *vxver > '9')) vxver++;
 

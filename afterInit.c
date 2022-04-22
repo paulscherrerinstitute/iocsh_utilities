@@ -19,7 +19,7 @@ struct cmditem
     struct cmditem* next;
     int type;
     union {
-        char* a[12];
+        const char* a[12];
         char cmd[256];
     } x;
 } *cmdlist, **cmdlast=&cmdlist;
@@ -54,7 +54,7 @@ void afterInitHook(initHookState state)
 
 static int first_time = 1;
 
-static struct cmditem *newItem(char* cmd, int type)
+static struct cmditem *newItem(const char* cmd, int type)
 {
     struct cmditem *item;
     if (!cmd)
@@ -86,7 +86,7 @@ static struct cmditem *newItem(char* cmd, int type)
 }
 
 #ifdef vxWorks
-int afterInit(char* cmd, char* a1, char* a2, char* a3, char* a4, char* a5, char* a6, char* a7, char* a8, char* a9, char* a10, char* a11)
+int afterInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
 {
     struct cmditem *item = newItem(cmd, 0);
     if (!item) return -1;
@@ -120,13 +120,13 @@ static void afterInitFunc(const iocshArgBuf *args)
     struct cmditem *item = newItem(args[0].aval.av[1], 1);
     if (!item) return;
 
-    n = sprintf(item->x.cmd, "%.255s", args[0].aval.av[1]);
+    n = sprintf(item->x.cmd, "%.*s", (int)sizeof(item->x.cmd)-1, args[0].aval.av[1]);
     for (i = 2; i < args[0].aval.ac; i++)
     {
         if (strpbrk(args[0].aval.av[i], " ,\"\\"))
-            n += sprintf(item->x.cmd+n, " '%.*s'", 255-3-n, args[0].aval.av[i]);
+            n += sprintf(item->x.cmd+n, " '%.*s'",(int)sizeof(item->x.cmd)-4-n, args[0].aval.av[i]);
         else
-            n += sprintf(item->x.cmd+n, " %.*s", 255-1-n, args[0].aval.av[i]);
+            n += sprintf(item->x.cmd+n, " %.*s", (int)sizeof(item->x.cmd)-2-n, args[0].aval.av[i]);
     }
 }
 
