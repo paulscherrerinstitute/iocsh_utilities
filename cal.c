@@ -82,8 +82,14 @@ long cal(const char* match, int level)
         struct channel_in_use *pciu;
         int n = 0;
         if (calDebug) fprintf(stderr, "host: %s\nuser: %s\n", client->pHostName, client->pUserName);
+        if (level >= 4) {
+            n += sprintf(clientref + n, "TID %p ", (void*)client->tid);
+#if defined(linux) && defined(EPICS_VERSION_INT)
+            n += sprintf(clientref + n, "(PID %u) ", client->tid->lwpId);
+#endif
+        }
         if (level >= 2) {
-            n = sprintf(clientref, "V%u.%u %s:",
+            n += sprintf(clientref + n, "V%u.%u %s:",
                 CA_MAJOR_PROTOCOL_REVISION,
                 client->minor_version_number,
                 client->proto == IPPROTO_UDP ? "UDP" :
