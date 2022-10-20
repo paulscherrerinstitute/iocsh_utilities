@@ -126,7 +126,7 @@ long cal(const char* match, int level)
                 || (client->pHostName && epicsStrGlobMatch(client->pHostName, match))
                 || epicsStrGlobMatch(clientref, match))
             {
-                printf("%s%s %s==> %s\n",
+                printf("%s%s %s%s%s==> %s\n",
 #ifndef EPICS_3_13
                     level < 3 ? "" :
                         pciu->state == rsrvCS_invalid ? "[invalid]" :
@@ -143,6 +143,10 @@ long cal(const char* match, int level)
                         asCheckPut(pciu->asClientPVT) ?
                             pciu->asClientPVT->trapMask ? "w" : "w" :
                         asCheckGet(pciu->asClientPVT) ? "r" : "n",
+                    level < 1 ? "" :
+                            ellCount(&pciu->eventq) ? "m" : "",
+                    level < 1 ? "" :
+                            pciu->pPutNotify ? "p" : "",
                     fullname
                 );
             }
