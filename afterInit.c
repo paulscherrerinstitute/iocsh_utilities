@@ -79,9 +79,19 @@ static struct cmditem *newItem(const char* cmd, int type, int when)
     }
     item->type = type;
     item->when = when;
-    item->next = NULL;
-    *cmdlast = item;
-    cmdlast = &item->next;
+    if (when >= initHookAtIocPause && when < initHookAfterInterruptAccept)
+    {
+        /* Reverse order for "shutdown hooks" */
+        if (!cmdlist) cmdlast = &item->next;
+        item->next = cmdlist;
+        cmdlist = item;
+    }
+    else
+    {
+        item->next = NULL;
+        *cmdlast = item;
+        cmdlast = &item->next;
+    }
     return item;
 }
 
