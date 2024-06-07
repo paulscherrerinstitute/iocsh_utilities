@@ -23,8 +23,8 @@
 struct cmditem
 {
     struct cmditem* next;
-    int type;
     int when;
+    int useIocshCmd;
     union {
         const char* a[12];
         char cmd[256];
@@ -39,7 +39,7 @@ void afterInitHook(initHookState state)
     {
         if (item->when != state) continue;
 #ifndef EPICS_3_13
-        if (item->type == 1)
+        if (item->useIocshCmd)
         {
             printf("%s\n", item->x.cmd);
             iocshCmd(item->x.cmd);
@@ -51,10 +51,9 @@ void afterInitHook(initHookState state)
     }
 }
 
-static int first_time = 1;
-
-static struct cmditem *newItem(const char* cmd, int type, int when)
+static struct cmditem *newItem(const char* cmd, int useIocshCmd, int when)
 {
+    static int first_time = 1;
     struct cmditem *item;
     if (!cmd)
     {
@@ -77,7 +76,7 @@ static struct cmditem *newItem(const char* cmd, int type, int when)
         perror("afterInit");
         return NULL;
     }
-    item->type = type;
+    item->useIocshCmd = useIocshCmd;
     item->when = when;
     if (when >= initHookAtIocPause && when < initHookAfterInterruptAccept)
     {
@@ -95,94 +94,7 @@ static struct cmditem *newItem(const char* cmd, int type, int when)
     return item;
 }
 
-#ifdef vxWorks
-int afterInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
-{
-    struct cmditem *item = newItem(cmd, 0, initHookAfterIocRunning);
-    if (!item) return -1;
-
-    item->x.a[0] = cmd;
-    item->x.a[1] = a1;
-    item->x.a[2] = a2;
-    item->x.a[3] = a3;
-    item->x.a[4] = a4;
-    item->x.a[5] = a5;
-    item->x.a[6] = a6;
-    item->x.a[7] = a7;
-    item->x.a[8] = a8;
-    item->x.a[9] = a9;
-    item->x.a[10] = a10;
-    item->x.a[11] = a11;
-
-    return 0;
-}
-
-int atInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
-{
-    struct cmditem *item = newItem(cmd, 0, initHookAtBeginning);
-    if (!item) return -1;
-
-    item->x.a[0] = cmd;
-    item->x.a[1] = a1;
-    item->x.a[2] = a2;
-    item->x.a[3] = a3;
-    item->x.a[4] = a4;
-    item->x.a[5] = a5;
-    item->x.a[6] = a6;
-    item->x.a[7] = a7;
-    item->x.a[8] = a8;
-    item->x.a[9] = a9;
-    item->x.a[10] = a10;
-    item->x.a[11] = a11;
-
-    return 0;
-}
-#endif
-
-#ifndef EPICS_3_13
-static void __atInitStage(int when, int wordcount, char* cmdword[])
-{
-    int i, n;
-    struct cmditem *item = newItem(cmdword[1], 1, when);
-    if (!item) return;
-
-    n = sprintf(item->x.cmd, "%.*s", (int)sizeof(item->x.cmd)-1, cmdword[1]);
-    for (i = 2; i < wordcount; i++)
-    {
-        if (strpbrk(cmdword[i], " ,\"\\"))
-            n += sprintf(item->x.cmd+n, " '%.*s'",(int)sizeof(item->x.cmd)-4-n, cmdword[i]);
-        else
-            n += sprintf(item->x.cmd+n, " %.*s", (int)sizeof(item->x.cmd)-2-n, cmdword[i]);
-    }
-}
-
-static const iocshFuncDef afterInitDef = {
-    "afterInit", 1, (const iocshArg *[]) {
-        &(iocshArg) { "commandline", iocshArgArgv },
-}};
-
-static void afterInitFunc(const iocshArgBuf *args)
-{
-    __atInitStage(initHookAfterIocRunning, args[0].aval.ac, args[0].aval.av);
-}
-
-static const iocshFuncDef atInitDef = {
-    "atInit", 1, (const iocshArg *[]) {
-        &(iocshArg) { "commandline", iocshArgArgv },
-}};
-
-static void atInitFunc(const iocshArgBuf *args)
-{
-    __atInitStage(initHookAtBeginning, args[0].aval.ac, args[0].aval.av);
-}
-
-static const iocshFuncDef atInitStageDef = {
-    "atInitStage", 2, (const iocshArg *[]) {
-        &(iocshArg) { "hook", iocshArgString },
-        &(iocshArg) { "commandline", iocshArgArgv },
-}};
-
-static void atInitStageFunc(const iocshArgBuf *args)
+static int hookNameToNumber(const char* hook)
 {
     static const struct { char* name; int hook; } hookMap[] = {
         { "IocBuild",               initHookAtIocBuild },
@@ -223,11 +135,10 @@ static void atInitStageFunc(const iocshArgBuf *args)
     };
 
     int i;
-    const char* hook = args[0].sval;
     if (!hook)
     {
         fprintf(stderr, "usage: atInitStage hook, command, args...\n");
-        return;
+        return -1;
     }
 
     if (epicsStrnCaseCmp("initHook", hook, 8) == 0) hook+=8;
@@ -236,11 +147,101 @@ static void atInitStageFunc(const iocshArgBuf *args)
         if (epicsStrCaseCmp(hook, hookMap[i].name) == 0
             || (hookMap[i].name[0] == 'A' && epicsStrCaseCmp(hook, hookMap[i].name+5) == 0))
         {
-            __atInitStage(hookMap[i].hook, args[1].aval.ac, args[1].aval.av);
-            return;
+            return hookMap[i].hook;
         }
     }
     fprintf(stderr, "atInitStage error: Unknown hook name '%s'\n", hook);
+    return -1;
+}
+
+#ifdef vxWorks
+int atInitStageVx(int when, const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
+{
+    struct cmditem *item = newItem(cmd, 0, when);
+    if (!item) return -1;
+
+    item->x.a[0] = cmd;
+    item->x.a[1] = a1;
+    item->x.a[2] = a2;
+    item->x.a[3] = a3;
+    item->x.a[4] = a4;
+    item->x.a[5] = a5;
+    item->x.a[6] = a6;
+    item->x.a[7] = a7;
+    item->x.a[8] = a8;
+    item->x.a[9] = a9;
+    item->x.a[10] = a10;
+    item->x.a[11] = a11;
+
+    return 0;
+}
+
+int atInitStage(const char* hook, const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10)
+{
+    int when = hookNameToNumber(hook);
+    if (when < 0) return -1;
+    return atInitStageVx(when, cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, NULL);
+}
+
+int afterInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
+{
+    return atInitStageVx(initHookAfterIocRunning, cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+}
+
+int atInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
+{
+    return atInitStageVx(initHookAtBeginning, cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
+}
+#endif
+
+#ifndef EPICS_3_13
+static void atInitStageIocsh(int when, int wordcount, char* cmdword[])
+{
+    int i, n;
+    struct cmditem *item = newItem(cmdword[1], 1, when);
+    if (!item) return;
+
+    n = sprintf(item->x.cmd, "%.*s", (int)sizeof(item->x.cmd)-1, cmdword[1]);
+    for (i = 2; i < wordcount; i++)
+    {
+        if (strpbrk(cmdword[i], " ,\"\\"))
+            n += sprintf(item->x.cmd+n, " '%.*s'",(int)sizeof(item->x.cmd)-4-n, cmdword[i]);
+        else
+            n += sprintf(item->x.cmd+n, " %.*s", (int)sizeof(item->x.cmd)-2-n, cmdword[i]);
+    }
+}
+
+static const iocshFuncDef afterInitDef = {
+    "afterInit", 1, (const iocshArg *[]) {
+        &(iocshArg) { "commandline", iocshArgArgv },
+}};
+
+static void afterInitFunc(const iocshArgBuf *args)
+{
+    atInitStageIocsh(initHookAfterIocRunning, args[0].aval.ac, args[0].aval.av);
+}
+
+static const iocshFuncDef atInitDef = {
+    "atInit", 1, (const iocshArg *[]) {
+        &(iocshArg) { "commandline", iocshArgArgv },
+}};
+
+static void atInitFunc(const iocshArgBuf *args)
+{
+    atInitStageIocsh(initHookAtBeginning, args[0].aval.ac, args[0].aval.av);
+}
+
+static const iocshFuncDef atInitStageDef = {
+    "atInitStage", 2, (const iocshArg *[]) {
+        &(iocshArg) { "hook", iocshArgString },
+        &(iocshArg) { "commandline", iocshArgArgv },
+}};
+
+static void atInitStageFunc(const iocshArgBuf *args)
+{
+    int when = hookNameToNumber(args[0].sval);
+    if (when < 0) return;
+    atInitStageIocsh(when, args[1].aval.ac, args[1].aval.av);
 }
 
 static void afterInitRegister(void)
