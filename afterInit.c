@@ -31,7 +31,7 @@ struct cmditem
     } x;
 } *cmdlist, **cmdlast=&cmdlist;
 
-void afterInitHook(initHookState state)
+static void afterInitHook(initHookState state)
 {
     struct cmditem *item;
 
@@ -55,14 +55,9 @@ static struct cmditem *newItem(const char* cmd, int useIocshCmd, int when)
 {
     static int first_time = 1;
     struct cmditem *item;
-    if (!cmd)
-    {
-        fprintf(stderr, "usage: afterInit command, args...\n");
-        return NULL;
-    }
     if (interruptAccept)
     {
-        fprintf(stderr, "afterInit can only be used before iocInit\n");
+        fprintf(stderr, "This function can only be used before iocInit\n");
         return NULL;
     }
     if (first_time)
@@ -180,16 +175,31 @@ int atInitStage(const char* hook, const char* cmd, const char* a1, const char* a
 {
     int when = hookNameToNumber(hook);
     if (when < 0) return -1;
+    if (!cmd)
+    {
+        fprintf(stderr, "usage: atInitStage hook, command, args...\n");
+        return -1;
+    }
     return atInitStageVx(when, cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, NULL);
 }
 
 int afterInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
 {
+    if (!cmd)
+    {
+        fprintf(stderr, "usage: afterInit command, args...\n");
+        return -1;
+    }
     return atInitStageVx(initHookAfterIocRunning, cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 }
 
 int atInit(const char* cmd, const char* a1, const char* a2, const char* a3, const char* a4, const char* a5, const char* a6, const char* a7, const char* a8, const char* a9, const char* a10, const char* a11)
 {
+    if (!cmd)
+    {
+        fprintf(stderr, "usage: atInit command, args...\n");
+        return -1;
+    }
     return atInitStageVx(initHookAtBeginning, cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 }
 #endif
@@ -218,6 +228,11 @@ static const iocshFuncDef afterInitDef = {
 
 static void afterInitFunc(const iocshArgBuf *args)
 {
+    if (!args[0].aval.av[0])
+    {
+        fprintf(stderr, "usage: afterInit command, args...\n");
+        return;
+    }
     atInitStageIocsh(initHookAfterIocRunning, args[0].aval.ac, args[0].aval.av);
 }
 
@@ -228,6 +243,11 @@ static const iocshFuncDef atInitDef = {
 
 static void atInitFunc(const iocshArgBuf *args)
 {
+    if (!args[0].aval.av[0])
+    {
+        fprintf(stderr, "usage: atInit command, args...\n");
+        return;
+    }
     atInitStageIocsh(initHookAtBeginning, args[0].aval.ac, args[0].aval.av);
 }
 
@@ -241,6 +261,11 @@ static void atInitStageFunc(const iocshArgBuf *args)
 {
     int when = hookNameToNumber(args[0].sval);
     if (when < 0) return;
+    if (!args[1].aval.av[0])
+    {
+        fprintf(stderr, "usage: atInitStage hook, command, args...\n");
+        return;
+    }
     atInitStageIocsh(when, args[1].aval.ac, args[1].aval.av);
 }
 
