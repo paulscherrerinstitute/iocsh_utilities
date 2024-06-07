@@ -185,36 +185,36 @@ static const iocshFuncDef atInitStageDef = {
 static void atInitStageFunc(const iocshArgBuf *args)
 {
     static const struct { char* name; int hook; } hookMap[] = {
-        { "IocBuild",           initHookAtIocBuild },
-        { "Beginning",          initHookAtBeginning },
-        { "CallbackInit",       initHookAfterCallbackInit },
-        { "CaLinkInit",         initHookAfterCaLinkInit },
-        { "InitDrvSup",         initHookAfterInitDrvSup },
-        { "InitRecSup",         initHookAfterInitRecSup },
-        { "InitDevSup",         initHookAfterInitDevSup },
-        { "InitDatabase",       initHookAfterInitDatabase },
-        { "FinishDevSup",       initHookAfterFinishDevSup },
-        { "ScanInit",           initHookAfterScanInit },
-        { "InitialProcess",     initHookAfterInitialProcess },
-        { "CaServerInit",       initHookAfterCaServerInit },
-        { "IocBuilt",           initHookAfterIocBuilt },
-        { "IocRun",             initHookAtIocRun },
-        { "DatabaseRunning",    initHookAfterDatabaseRunning },
-        { "CaServerRunning",    initHookAfterCaServerRunning },
-        { "IocRunning",         initHookAfterIocRunning },
-        { "IocPause",           initHookAtIocPause },
-        { "CaServerPaused",     initHookAfterCaServerPaused },
-        { "DatabasePaused",     initHookAfterDatabasePaused },
-        { "IocPaused",          initHookAfterIocPaused },
+        { "IocBuild",               initHookAtIocBuild },
+        { "Beginning",              initHookAtBeginning },
+        { "AfterCallbackInit",      initHookAfterCallbackInit },
+        { "AfterCaLinkInit",        initHookAfterCaLinkInit },
+        { "AfterInitDrvSup",        initHookAfterInitDrvSup },
+        { "AfterInitRecSup",        initHookAfterInitRecSup },
+        { "AfterInitDevSup",        initHookAfterInitDevSup },
+        { "AfterInitDatabase",      initHookAfterInitDatabase },
+        { "AfterFinishDevSup",      initHookAfterFinishDevSup },
+        { "AfterScanInit",          initHookAfterScanInit },
+        { "AfterInitialProcess",    initHookAfterInitialProcess },
+        { "AfterCaServerInit",      initHookAfterCaServerInit },
+        { "AfterIocBuilt",          initHookAfterIocBuilt },
+        { "IocRun",                 initHookAtIocRun },
+        { "AfterDatabaseRunning",   initHookAfterDatabaseRunning },
+        { "AfterCaServerRunning",   initHookAfterCaServerRunning },
+        { "AfterIocRunning",        initHookAfterIocRunning },
+        { "IocPause",               initHookAtIocPause },
+        { "AfterCaServerPaused",    initHookAfterCaServerPaused },
+        { "AfterDatabasePaused",    initHookAfterDatabasePaused },
+        { "AfterIocPaused",         initHookAfterIocPaused },
 #if defined(EPICS_VERSION_INT)
 #if EPICS_VERSION_INT >= VERSION_INT(7, 0, 3, 1)
-        { "Shutdown",           initHookAtShutdown },
-        { "CloseLinks",         initHookAfterCloseLinks },
-        { "StopScan",           initHookAfterStopScan },
-        { "StopCallback",       initHookAfterStopCallback },
-        { "StopLinks",          initHookAfterStopLinks },
-        { "BeforeFree",         initHookBeforeFree },
-        { "Shutdown",           initHookAfterShutdown },
+        { "Shutdown",               initHookAtShutdown },
+        { "AfterCloseLinks",        initHookAfterCloseLinks },
+        { "AfterStopScan",          initHookAfterStopScan },
+        { "AfterStopCallback",      initHookAfterStopCallback },
+        { "AfterStopLinks",         initHookAfterStopLinks },
+        { "BeforeFree",             initHookBeforeFree },
+        { "AfterShutdown",          initHookAfterShutdown },
 #endif
 #endif
         { "InterruptAccept",    initHookAfterInterruptAccept },
@@ -224,16 +224,18 @@ static void atInitStageFunc(const iocshArgBuf *args)
 
     int i;
     const char* hook = args[0].sval;
-    if (!hook) {
+    if (!hook)
+    {
         fprintf(stderr, "usage: atInitStage hook, command, args...\n");
         return;
     }
 
     if (epicsStrnCaseCmp("initHook", hook, 8) == 0) hook+=8;
     if (epicsStrnCaseCmp("At", hook, 2) == 0) hook+=2;
-    if (epicsStrnCaseCmp("After", hook, 5) == 0) hook+=5;
     for (i = 0; hookMap[i].name; i++) {
-        if (epicsStrCaseCmp(hook, hookMap[i].name) == 0) {
+        if (epicsStrCaseCmp(hook, hookMap[i].name) == 0
+            || (hookMap[i].name[0] == 'A' && epicsStrCaseCmp(hook, hookMap[i].name+5) == 0))
+        {
             __atInitStage(hookMap[i].hook, args[1].aval.ac, args[1].aval.av);
             return;
         }
